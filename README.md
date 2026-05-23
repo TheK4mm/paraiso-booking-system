@@ -63,7 +63,6 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
 
-```
 ┌────────────────────────────┐    ┌────────────────────────────┐
 │  Cliente externo / Postman │    │  Navegador (Thymeleaf)     │
 └─────────────┬──────────────┘    └─────────────┬──────────────┘
@@ -90,7 +89,6 @@ El proyecto sigue una **arquitectura en capas** con separación clara de respons
               ┌────────────▼─────────────┐
               │       PostgreSQL         │
               └──────────────────────────┘
-```
 =======
 El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades:
 ┌──────────────────────────────────────────────────────┐
