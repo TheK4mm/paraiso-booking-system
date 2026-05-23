@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class ServicioService {
+public class ServicioService implements IViewMapService<ServicioDTO.Response> {
 
     private final ServicioRepository servicioRepository;
 
@@ -28,6 +29,18 @@ public class ServicioService {
 
     public ServicioDTO.Response findById(Long id) {
         return toResponse(getServicioOrThrow(id));
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(ServicioDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     public List<ServicioDTO.Response> findByCategoria(Servicio.CategoriaServicio categoria) {

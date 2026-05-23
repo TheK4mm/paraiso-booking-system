@@ -15,7 +15,7 @@ import java.util.List;
  * Base URL: /api/tipos-habitacion
  */
 @RestController
-@RequestMapping("/tipos-habitacion")
+@RequestMapping("/api/tipos-habitacion")
 @RequiredArgsConstructor
 public class TipoHabitacionController {
 

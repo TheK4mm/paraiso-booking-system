@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
  * Base URL: /api/habitaciones
  */
 @RestController
-@RequestMapping("/habitaciones")
+@RequestMapping("/api/habitaciones")
 @RequiredArgsConstructor
 public class HabitacionController {
 

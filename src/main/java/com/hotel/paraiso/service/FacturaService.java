@@ -17,13 +17,14 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class FacturaService {
+public class FacturaService implements IViewMapService<FacturaDTO.Response> {
 
     private final FacturaRepository facturaRepository;
     private final ReservaRepository reservaRepository;
@@ -35,6 +36,18 @@ public class FacturaService {
 
     public FacturaDTO.Response findById(Long id) {
         return toResponse(getFacturaOrThrow(id));
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(FacturaDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     public FacturaDTO.Response findByReserva(Long reservaId) {

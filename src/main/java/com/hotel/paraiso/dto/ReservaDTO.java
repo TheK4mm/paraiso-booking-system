@@ -7,7 +7,9 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReservaDTO {
 
@@ -73,6 +75,26 @@ public class ReservaDTO {
 
         // Factura asociada
         private FacturaDTO.Response factura;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("codigoReserva", this.codigoReserva);
+            map.put("fechaEntrada", this.fechaEntrada);
+            map.put("fechaSalida", this.fechaSalida);
+            map.put("numeroHuespedes", this.numeroHuespedes);
+            map.put("totalNoches", this.totalNoches);
+            map.put("precioTotal", this.precioTotal);
+            map.put("observaciones", this.observaciones);
+            map.put("estado", this.estado);
+            map.put("fechaCreacion", this.fechaCreacion);
+            map.put("clienteId", this.clienteId);
+            map.put("clienteNombreCompleto", this.clienteNombreCompleto);
+            map.put("clienteDocumento", this.clienteDocumento);
+            map.put("empleadoId", this.empleadoId);
+            map.put("empleadoNombreCompleto", this.empleadoNombreCompleto);
+            return map;
+        }
     }
 
     /** Para actualizar solo el estado */
@@ -80,5 +102,11 @@ public class ReservaDTO {
     public static class EstadoRequest {
         @NotNull(message = "El nuevo estado es obligatorio")
         private EstadoReserva estado;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("estado", this.estado);
+            return map;
+        }
     }
 }

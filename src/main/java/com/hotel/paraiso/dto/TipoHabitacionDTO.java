@@ -4,6 +4,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * DTOs para TipoHabitacion.
@@ -12,11 +14,7 @@ import java.math.BigDecimal;
 public class TipoHabitacionDTO {
 
     /** Usado en POST/PUT para crear o actualizar */
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class Request {
 
         @NotBlank(message = "El nombre es obligatorio")
@@ -39,11 +37,7 @@ public class TipoHabitacionDTO {
     }
 
     /** Usado en respuestas GET */
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
+    @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class Response {
         private Long id;
         private String nombre;
@@ -52,5 +46,17 @@ public class TipoHabitacionDTO {
         private BigDecimal precioBaseNoche;
         private Boolean activo;
         private Integer totalHabitaciones;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("nombre", this.nombre);
+            map.put("descripcion", this.descripcion);
+            map.put("capacidadMaxima", this.capacidadMaxima);
+            map.put("precioBaseNoche", this.precioBaseNoche);
+            map.put("activo", this.activo);
+            map.put("totalHabitaciones", this.totalHabitaciones);
+            return map;
+        }
     }
 }

@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class EmpleadoDTO {
 
@@ -54,5 +56,22 @@ public class EmpleadoDTO {
         private Boolean activo;
         private LocalDateTime fechaRegistro;
         private Integer totalReservasGestionadas;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("nombre", this.nombre);
+            map.put("apellido", this.apellido);
+            map.put("nombreCompleto", this.nombreCompleto);
+            map.put("numeroDocumento", this.numeroDocumento);
+            map.put("cargo", this.cargo);
+            map.put("emailCorporativo", this.emailCorporativo);
+            map.put("telefonoExtension", this.telefonoExtension);
+            map.put("fechaContratacion", this.fechaContratacion);
+            map.put("activo", this.activo);
+            map.put("fechaRegistro", this.fechaRegistro);
+            map.put("totalReservasGestionadas", this.totalReservasGestionadas);
+            return map;
+        }
     }
 }

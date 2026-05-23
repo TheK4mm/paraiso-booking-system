@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class HabitacionDTO {
 
@@ -38,10 +40,24 @@ public class HabitacionDTO {
         private String descripcion;
         private EstadoHabitacion estado;
         private Boolean activo;
-        // Datos embebidos del TipoHabitacion (sin lazy loading)
         private Long tipoHabitacionId;
         private String tipoHabitacionNombre;
         private BigDecimal precioBaseNoche;
         private Integer capacidadMaxima;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("numero", this.numero);
+            map.put("piso", this.piso);
+            map.put("descripcion", this.descripcion);
+            map.put("estado", this.estado);
+            map.put("activo", this.activo);
+            map.put("tipoHabitacionId", this.tipoHabitacionId);
+            map.put("tipoHabitacionNombre", this.tipoHabitacionNombre);
+            map.put("precioBaseNoche", this.precioBaseNoche);
+            map.put("capacidadMaxima", this.capacidadMaxima);
+            return map;
+        }
     }
 }

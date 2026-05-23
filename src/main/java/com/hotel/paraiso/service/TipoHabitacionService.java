@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class TipoHabitacionService {
+public class TipoHabitacionService implements ICategoryService {
 
     private final TipoHabitacionRepository tipoHabitacionRepository;
 
@@ -33,6 +34,18 @@ public class TipoHabitacionService {
         TipoHabitacion tipo = tipoHabitacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TipoHabitacion", "id", id));
         return toResponse(tipo);
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(TipoHabitacionDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     @Transactional
@@ -58,7 +71,6 @@ public class TipoHabitacionService {
         TipoHabitacion tipo = tipoHabitacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TipoHabitacion", "id", id));
 
-        // Verificar nombre duplicado excluyendo el actual
         tipoHabitacionRepository.findByNombreIgnoreCase(request.getNombre())
                 .ifPresent(existing -> {
                     if (!existing.getId().equals(id)) {
@@ -81,13 +93,12 @@ public class TipoHabitacionService {
     public void delete(Long id) {
         TipoHabitacion tipo = tipoHabitacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("TipoHabitacion", "id", id));
-        tipo.setActivo(false); // Soft delete
+        tipo.setActivo(false);
         tipoHabitacionRepository.save(tipo);
         log.info("TipoHabitacion desactivado id={}", id);
     }
 
-    // ─── Mapper manual ────────────────────────────────────────
-    private TipoHabitacionDTO.Response toResponse(TipoHabitacion tipo) {
+    public TipoHabitacionDTO.Response toResponse(TipoHabitacion tipo) {
         int totalHabitaciones = tipo.getHabitaciones() != null ? tipo.getHabitaciones().size() : 0;
         return TipoHabitacionDTO.Response.builder()
                 .id(tipo.getId())

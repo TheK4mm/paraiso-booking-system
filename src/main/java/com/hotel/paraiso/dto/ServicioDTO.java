@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ServicioDTO {
 
@@ -36,5 +38,16 @@ public class ServicioDTO {
         private BigDecimal precio;
         private CategoriaServicio categoria;
         private Boolean activo;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("nombre", this.nombre);
+            map.put("descripcion", this.descripcion);
+            map.put("precio", this.precio);
+            map.put("categoria", this.categoria);
+            map.put("activo", this.activo);
+            return map;
+        }
     }
 }

@@ -16,13 +16,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class ReservaService {
+public class ReservaService implements IViewMapService<ReservaDTO.Response> {
 
     private final ReservaRepository reservaRepository;
     private final ClienteRepository clienteRepository;
@@ -47,6 +48,18 @@ public class ReservaService {
         Reserva reserva = reservaRepository.findByCodigoReserva(codigo)
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva", "codigoReserva", codigo));
         return toResponse(reserva);
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(ReservaDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     public List<ReservaDTO.Response> findByCliente(Long clienteId) {

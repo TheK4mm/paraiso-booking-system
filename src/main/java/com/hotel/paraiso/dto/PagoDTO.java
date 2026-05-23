@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class PagoDTO {
 
@@ -44,5 +46,20 @@ public class PagoDTO {
         private Long reservaId;
         private String codigoReserva;
         private Long facturaId;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("monto", this.monto);
+            map.put("metodoPago", this.metodoPago);
+            map.put("referenciaTransaccion", this.referenciaTransaccion);
+            map.put("estadoPago", this.estadoPago);
+            map.put("descripcion", this.descripcion);
+            map.put("fechaPago", this.fechaPago);
+            map.put("reservaId", this.reservaId);
+            map.put("codigoReserva", this.codigoReserva);
+            map.put("facturaId", this.facturaId);
+            return map;
+        }
     }
 }

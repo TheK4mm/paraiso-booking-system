@@ -1,8 +1,10 @@
-# Hotel Paraiso API
+# Hotel Paraíso — Sistema Full-Stack
 
-Sistema de Gestión de Reservas para el **Hotel Paraíso** — API REST completa desarrollada con **Spring Boot 3**, **Spring Data JPA** y **PostgreSQL**.
+Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
 
-Proyecto académico que implementa arquitectura en capas, modelado de bases de datos relacionales con múltiples tipos de relaciones (1:1, 1:N, N:M), manejo global de excepciones y buenas prácticas de desarrollo backend.
+El proyecto expone simultáneamente:
+- Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
+- Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
 
 ## Descripción
 
@@ -20,12 +22,13 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 | Incluido | No incluido |
 |----------|-------------|
-| CRUD completo (8 entidades) | Autenticación JWT / OAuth2 |
-| Control de disponibilidad por fechas | Reportes gráficos / Dashboard |
-| Máquina de estados para reservas | Notificaciones email/SMS |
-| Cálculo automático de precios | Integración con pasarelas de pago |
-| Validación de pagos vs saldo | Módulo de inventario |
-| Facturación con IVA y descuentos | Frontend / interfaz web |
+| API REST (`/api/...`) — CRUD completo 8 entidades | Autenticación JWT / OAuth2 |
+| Frontend Thymeleaf dinámico (`/`) | Reportes gráficos / Dashboard |
+| Control de disponibilidad por fechas | Notificaciones email/SMS |
+| Máquina de estados para reservas | Integración con pasarelas de pago |
+| Cálculo automático de precios | Módulo de inventario |
+| Templates genéricos reutilizables | |
+| Facturación con IVA y descuentos | |
 
 ---
 
@@ -36,9 +39,11 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 | Lenguaje | Java 17 |
 | Framework | Spring Boot 3.2.4 |
 | Persistencia | Spring Data JPA + Hibernate |
+| Vista | Thymeleaf + Layout Dialect |
+| UI | Bootstrap 5.3 + Bootstrap Icons |
 | Base de datos | PostgreSQL 16 |
 | Validaciones | Jakarta Validation (`@Valid`) |
-| Utilidades | Lombok |
+| Utilidades | Lombok, MapStruct |
 | Build | Maven |
 | Pruebas API | Postman |
 
@@ -46,38 +51,40 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 ## Arquitectura
 
-El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades:
-┌──────────────────────────────────────────────────────┐
-│            CLIENT (Postman / Frontend)        │
-└────────────────────────┬─────────────────────────────┘
-                         │ HTTP JSON
-┌────────────────────────▼─────────────────────────────┐
-│              CONTROLLER LAYER                        │
-│  @RestController — Recibe requests, delega al service│
-│  Valida con @Valid, retorna ResponseEntity           │
-└────────────────────────┬─────────────────────────────┘
-                         │ DTOs
-┌────────────────────────▼─────────────────────────────┐
-│               SERVICE LAYER                          │
-│  @Service — Lógica de negocio, transacciones         │
-│  Valida reglas, mapea entidades ↔ DTOs               │
-└────────────────────────┬─────────────────────────────┘
-                         │ Entities
-┌────────────────────────▼─────────────────────────────┐
-│             REPOSITORY LAYER                         │
-│  @Repository — Spring Data JPA                       │
-│  JPQL queries, métodos derivados                     │
-└────────────────────────┬─────────────────────────────┘
-                         │ SQL
-┌────────────────────────▼─────────────────────────────┐
-│              PostgreSQL DATABASE                     │
-│  8 tablas principales + 2 tablas intermedias (N:M)   │
-└──────────────────────────────────────────────────────┘
+El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
+
+```
+┌────────────────────────────┐    ┌────────────────────────────┐
+│  Cliente externo / Postman │    │  Navegador (Thymeleaf)     │
+└─────────────┬──────────────┘    └─────────────┬──────────────┘
+              │ JSON                            │ HTML
+┌─────────────▼──────────────┐    ┌─────────────▼──────────────┐
+│  controller.* (REST)       │    │  controller.view.* (MVC)   │
+│  @RestController           │    │  @Controller               │
+│  /api/...                  │    │  /clientes, /habitaciones… │
+└─────────────┬──────────────┘    └─────────────┬──────────────┘
+              │ DTOs                            │ Map<String,Object>
+              └────────────┬───────────────────┘
+                           │
+              ┌────────────▼─────────────┐
+              │     SERVICE LAYER        │
+              │   findAll()              │
+              │   findAllAsMap()  ◄──┐   │
+              │   findByIdAsMap() ◄──┘   │ Implementan IViewMapService<R>
+              └────────────┬─────────────┘
+                           │
+              ┌────────────▼─────────────┐
+              │   REPOSITORY (JPA)       │
+              └────────────┬─────────────┘
+                           │
+              ┌────────────▼─────────────┐
+              │       PostgreSQL         │
+              └──────────────────────────┘
 ```
 
-## Modelo de Datos
-
 ---
+
+## Modelo de Datos
 
 ### Entidades
 
@@ -92,115 +99,127 @@ El proyecto sigue una **arquitectura en capas** con separación clara de respons
 | `Pago` | Pagos parciales o totales asociados a una reserva |
 | `Factura` | Documento fiscal con subtotal, IVA y descuentos |
 
-## Maquina de Estados - Reserva
+### Máquina de Estados — Reserva
 
 ```
-  PENDIENTE ──── confirmar ──→ CONFIRMADA ──── check-in ──→ CHECKIN ──── check-out ──→ CHECKOUT
-      │               │                                          │
-      └── cancelar ───┘                                    no_show ──→ NO_SHOW
-                      └─────────────── cancelar ──────────────────┘
+PENDIENTE ──confirmar──▶ CONFIRMADA ──check-in──▶ CHECKIN ──check-out──▶ CHECKOUT
+    │            │                                   │
+    │            └──cancelar──┐                    no_show ──▶ NO_SHOW
+    └─cancelar─▶ CANCELADA ◄──┘
 ```
 
 Las transiciones inválidas retornan HTTP 422 con mensaje descriptivo.
 
 ---
 
-## Endpoints API REST
+## Patrón Full-Stack Implementado
 
-### Tipos de Habitación — `/tipos-habitacion`
+Para evitar duplicar HTML por cada entidad, el proyecto implementa un patrón genérico **DTO ↔ Map ↔ Template**:
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/tipos-habitacion` | Crear tipo de habitación |
-| `GET` | `/tipos-habitacion` | Listar todos |
-| `GET` | `/tipos-habitacion/{id}` | Obtener por ID |
-| `PUT` | `/tipos-habitacion/{id}` | Actualizar |
-| `DELETE` | `/tipos-habitacion/{id}` | Desactivar (soft delete) |
+### 1) DTOs con `toMap()`
 
-### Habitaciones — `/habitaciones`
+Cada `DTO.Response` expone su contenido como `Map<String, Object>` con claves específicas y orden estable (`LinkedHashMap`). Estas claves son las que la vista referencia.
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/habitaciones` | Crear habitación |
-| `GET` | `/habitaciones` | Listar todas |
-| `GET` | `/habitaciones/{id}` | Obtener por ID |
-| `GET` | `/habitaciones/disponibles?entrada=YYYY-MM-DD&salida=YYYY-MM-DD` | Disponibilidad por fechas |
-| `PUT` | `/habitaciones/{id}` | Actualizar |
-| `DELETE` | `/habitaciones/{id}` | Desactivar |
+```java
+public Map<String, Object> toMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("id", this.id);
+    map.put("nombreCompleto", this.nombreCompleto);
+    map.put("email", this.email);
+    // ...
+    return map;
+}
+```
 
-### Clientes — `/clientes`
+### 2) Services con `findAllAsMap()` / `findByIdAsMap()`
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/clientes` | Registrar cliente |
-| `GET` | `/clientes` | Listar todos |
-| `GET` | `/clientes/{id}` | Obtener por ID |
-| `GET` | `/clientes/search?termino=nombre` | Buscar por nombre/apellido |
-| `PUT` | `/clientes/{id}` | Actualizar |
-| `DELETE` | `/clientes/{id}` | Desactivar |
+Todos los servicios implementan la interfaz `IViewMapService<R>`:
 
-### Empleados — `/empleados`
+```java
+public interface IViewMapService<R> {
+    List<Map<String, Object>> findAllAsMap();
+    Map<String, Object> findByIdAsMap(Long id);
+}
+```
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/empleados` | Registrar empleado |
-| `GET` | `/empleados` | Listar todos |
-| `GET` | `/empleados/{id}` | Obtener por ID |
-| `PUT` | `/empleados/{id}` | Actualizar |
-| `DELETE` | `/empleados/{id}` | Desactivar |
+Además, `TipoHabitacionService` implementa `ICategoryService` (que extiende `IViewMapService`) y expone el alias semántico `getAllCategoriesAsMap()`.
 
-### Servicios — `/servicios`
+La implementación reutiliza siempre la lógica existente:
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/servicios` | Crear servicio |
-| `GET` | `/servicios` | Listar todos |
-| `GET` | `/servicios/{id}` | Obtener por ID |
-| `GET` | `/servicios/categoria/{categoria}` | Filtrar por categoría |
-| `PUT` | `/servicios/{id}` | Actualizar |
-| `DELETE` | `/servicios/{id}` | Desactivar |
+```java
+@Override
+public List<Map<String, Object>> findAllAsMap() {
+    return findAll().stream()
+            .map(ClienteDTO.Response::toMap)
+            .collect(Collectors.toList());
+}
+```
 
-### Reservas — `/reservas`
+### 3) ViewControllers: construyen columnas + invocan `findAllAsMap()`
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/reservas` | Crear reserva |
-| `GET` | `/reservas` | Listar todas |
-| `GET` | `/reservas/{id}` | Obtener por ID |
-| `GET` | `/reservas/codigo/{codigo}` | Buscar por código |
-| `GET` | `/reservas/cliente/{clienteId}` | Reservas de un cliente |
-| `GET` | `/reservas/estado/{estado}` | Filtrar por estado |
-| `PUT` | `/reservas/{id}` | Actualizar |
-| `PATCH` | `/reservas/{id}/estado` | Cambiar estado |
-| `DELETE` | `/reservas/{id}` | Cancelar |
+Cada ViewController (paquete `controller.view`) define la estructura de columnas y campos del formulario, llama al servicio y siempre retorna `pages/list` o `pages/form`:
 
-### Pagos — `/pagos`
+```java
+@GetMapping
+public String list(Model model) {
+    List<Map<String, String>> columns = List.of(
+        column("id", "ID"),
+        column("nombreCompleto", "Nombre Completo"),
+        column("email", "Email")
+    );
+    model.addAttribute("columns", columns);
+    model.addAttribute("rows", service.findAllAsMap());
+    model.addAttribute("entityPath", "/clientes");
+    return "pages/list";
+}
+```
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/pagos` | Registrar pago |
-| `GET` | `/pagos` | Listar todos |
-| `GET` | `/pagos/{id}` | Obtener por ID |
-| `GET` | `/pagos/reserva/{reservaId}` | Pagos de una reserva |
-| `PUT` | `/pagos/{id}` | Actualizar |
-| `DELETE` | `/pagos/{id}` | Cancelar pago |
+### 4) Un único template `pages/list.html`
 
-### Facturas — `/facturas`
+Renderiza cualquier entidad. Itera columnas y filas (Maps):
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `POST` | `/facturas` | Generar factura |
-| `GET` | `/facturas` | Listar todas |
-| `GET` | `/facturas/{id}` | Obtener por ID |
-| `GET` | `/facturas/reserva/{reservaId}` | Factura de una reserva |
-| `PUT` | `/facturas/{id}` | Actualizar |
-| `DELETE` | `/facturas/{id}` | Anular |
+```html
+<th th:each="col : ${columns}" th:text="${col.label}"></th>
+<td th:each="col : ${columns}" th:text="${row.get(col.key)}"></td>
+```
+
+### 5) Un único template `pages/form.html`
+
+Sirve tanto para **crear** como para **editar**. El controlador es quien decide pasando `isEdit=true|false` y la URL `action` correspondiente. El fragmento `fragments/form.html` soporta tipos: `text`, `email`, `number`, `date`, `password`, `textarea`, `select`, `multiselect`, `checkbox`.
 
 ---
 
-### Manejo de errores
+## Endpoints
 
-El sistema retorna respuestas de error claras y estandarizadas:
+### API REST — todas bajo `/api/...`
+
+| Recurso | Prefijo | Endpoints estándar |
+|---------|---------|--------------------|
+| Tipos de Habitación | `/api/tipos-habitacion` | `GET`, `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}` |
+| Habitaciones | `/api/habitaciones` | + `GET /disponibles?entrada&salida` |
+| Clientes | `/api/clientes` | + `GET /search?termino` |
+| Empleados | `/api/empleados` | CRUD estándar |
+| Servicios | `/api/servicios` | + `GET /categoria/{categoria}` |
+| Reservas | `/api/reservas` | + `GET /codigo/{codigo}`, `GET /cliente/{id}`, `GET /estado/{estado}`, `PATCH /{id}/estado` |
+| Pagos | `/api/pagos` | + `GET /reserva/{reservaId}` |
+| Facturas | `/api/facturas` | + `GET /reserva/{reservaId}` |
+
+### Interfaz Web Thymeleaf — rutas en raíz `/`
+
+| Ruta | Descripción |
+|------|-------------|
+| `GET /` | Página de inicio con catálogo de módulos |
+| `GET /<entidad>` | Listado dinámico (tabla genérica) |
+| `GET /<entidad>/new` | Formulario de creación |
+| `GET /<entidad>/{id}/edit` | Formulario de edición prellenado |
+| `POST /<entidad>` | Crear |
+| `POST /<entidad>/{id}` | Actualizar |
+| `POST /<entidad>/{id}/delete` | Desactivar / cancelar |
+
+Entidades disponibles en la UI:
+`/tipos-habitacion`, `/habitaciones`, `/clientes`, `/empleados`, `/servicios`, `/reservas`, `/pagos`, `/facturas`.
+
+### Manejo de errores (API)
 
 | Código | Tipo | Ejemplo |
 |--------|------|---------|
@@ -218,66 +237,84 @@ El sistema retorna respuestas de error claras y estandarizadas:
 hotel-paraiso
 ├── pom.xml
 ├── db/
-│   ├── database.sql
+│   └── database.sql
 └── src/main/
     ├── resources/
-    │   └── application.properties
+    │   ├── application.properties
+    │   └── templates/
+    │       ├── layout/
+    │       │   └── base.html          ← Layout decorador (layout-dialect)
+    │       ├── fragments/
+    │       │   ├── navbar.html        ← Barra de navegación
+    │       │   ├── alerts.html        ← Flash messages
+    │       │   ├── table.html         ← Tabla genérica reutilizable
+    │       │   └── form.html          ← Formulario genérico (create + edit)
+    │       └── pages/
+    │           ├── home.html          ← Página de inicio
+    │           ├── list.html          ← Vista única de listado
+    │           └── form.html          ← Vista única de formulario
     └── java/com/hotel/paraiso/
         ├── HotelParaisoApplication.java
-        ├── model/             ← Entidades JPA
-        │   ├── TipoHabitacion.java
-        │   ├── Habitacion.java
-        │   ├── Cliente.java
-        │   ├── Empleado.java
-        │   ├── Servicio.java
-        │   ├── Reserva.java      ← Entidad central
-        │   ├── Pago.java
-        │   └── Factura.java
-        ├── repository/        ← Spring Data JPA
-        │   ├── TipoHabitacionRepository.java
-        │   ├── HabitacionRepository.java
-        │   ├── ClienteRepository.java
-        │   ├── EmpleadoRepository.java
-        │   ├── ServicioRepository.java
-        │   ├── ReservaRepository.java
-        │   ├── PagoRepository.java
-        │   └── FacturaRepository.java
-        ├── service/           ← Lógica de negocio
-        │   ├── TipoHabitacionService.java
-        │   ├── HabitacionService.java
-        │   ├── ClienteService.java
-        │   ├── EmpleadoService.java
-        │   ├── ServicioService.java
-        │   ├── ReservaService.java   ← Servicio más complejo
-        │   ├── PagoService.java
-        │   └── FacturaService.java
-        ├── controller/        ← API REST
-        │   ├── TipoHabitacionController.java
-        │   ├── HabitacionController.java
+        ├── model/              ← Entidades JPA
+        ├── repository/         ← Spring Data JPA
+        ├── dto/                ← DTOs Request/Response + toMap()
+        ├── service/
+        │   ├── IViewMapService.java   ← Interfaz base findAllAsMap/findByIdAsMap
+        │   ├── ICategoryService.java  ← Interfaz para TipoHabitacion
+        │   ├── ClienteService.java    implements IViewMapService<ClienteDTO.Response>
+        │   ├── EmpleadoService.java   …
+        │   ├── HabitacionService.java …
+        │   ├── ServicioService.java   …
+        │   ├── ReservaService.java    …
+        │   ├── PagoService.java       …
+        │   └── FacturaService.java    …
+        ├── controller/         ← API REST (@RestController, /api/...)
         │   ├── ClienteController.java
         │   ├── EmpleadoController.java
+        │   ├── HabitacionController.java
+        │   ├── TipoHabitacionController.java
         │   ├── ServicioController.java
         │   ├── ReservaController.java
         │   ├── PagoController.java
         │   └── FacturaController.java
-        ├── dto/               ← Objetos de transferencia
-        │   ├── TipoHabitacionDTO.java
-        │   ├── HabitacionDTO.java
-        │   ├── ClienteDTO.java
-        │   ├── EmpleadoDTO.java
-        │   ├── ServicioDTO.java
-        │   ├── ReservaDTO.java
-        │   ├── PagoDTO.java
-        │   └── FacturaDTO.java
-        └── exception/         ← Manejo de errores
+        ├── controller/view/    ← MVC Thymeleaf (@Controller, rutas raíz)
+        │   ├── HomeViewController.java
+        │   ├── ViewSupport.java        ← Helpers de columnas y campos
+        │   ├── ClienteViewController.java
+        │   ├── EmpleadoViewController.java
+        │   ├── HabitacionViewController.java
+        │   ├── TipoHabitacionViewController.java
+        │   ├── ServicioViewController.java
+        │   ├── ReservaViewController.java
+        │   ├── PagoViewController.java
+        │   └── FacturaViewController.java
+        └── exception/          ← Manejo global de errores
             ├── ResourceNotFoundException.java
             ├── BadRequestException.java
             ├── BusinessException.java
-            └── GlobalExceptionHandler.javaç
+            └── GlobalExceptionHandler.java
 ```
 
 ---
 
-## 👤 Camilo
+## Cómo Ejecutar
+
+1. **Configurar PostgreSQL** — crear la base de datos y aplicar `db/database.sql`.
+2. **Ajustar credenciales** en `src/main/resources/application.properties` (`spring.datasource.url`, `username`, `password`).
+3. **Compilar** — `mvn clean package -DskipTests`
+4. **Ejecutar** — `mvn spring-boot:run` o `java -jar target/hotel-paraiso-1.0.0.jar`
+5. **Abrir**:
+   - UI web: `http://localhost:8080/`
+   - API REST: `http://localhost:8080/api/clientes` (etc.)
+
+---
+
+## Notas sobre cambios respecto a la versión previa
+
+- Se eliminó `server.servlet.context-path=/api`. Los REST controllers ahora declaran el prefijo `/api/...` directamente en `@RequestMapping`, dejando libre la raíz `/` para servir Thymeleaf.
+- Se corrigió el `HabitacionController` que antes quedaba en `/api/api/habitaciones` por duplicación de prefijo.
+- Se introdujeron las interfaces `IViewMapService<R>` y `ICategoryService`, sin alterar la firma de los métodos `findAll()/findById()/create/update/delete` previos.
+- Los DTOs conservan su estructura `Request` / `Response` original; solo se añadió o completó el método `toMap()` en cada Response con claves en español coherentes con los campos.
+- La API REST funciona igual que antes — únicamente cambia el prefijo unificado a `/api/...`.
 
 ---

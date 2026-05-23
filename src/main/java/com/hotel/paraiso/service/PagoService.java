@@ -16,13 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class PagoService {
+public class PagoService implements IViewMapService<PagoDTO.Response> {
 
     private final PagoRepository pagoRepository;
     private final ReservaRepository reservaRepository;
@@ -35,6 +36,18 @@ public class PagoService {
 
     public PagoDTO.Response findById(Long id) {
         return toResponse(getPagoOrThrow(id));
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(PagoDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     public List<PagoDTO.Response> findByReserva(Long reservaId) {

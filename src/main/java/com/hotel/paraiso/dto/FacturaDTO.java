@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class FacturaDTO {
 
@@ -39,5 +41,22 @@ public class FacturaDTO {
         private LocalDateTime fechaEmision;
         private Long reservaId;
         private String codigoReserva;
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", this.id);
+            map.put("numeroFactura", this.numeroFactura);
+            map.put("subtotal", this.subtotal);
+            map.put("impuestoPorcentaje", this.impuestoPorcentaje);
+            map.put("impuestoValor", this.impuestoValor);
+            map.put("descuento", this.descuento);
+            map.put("total", this.total);
+            map.put("notas", this.notas);
+            map.put("estadoFactura", this.estadoFactura);
+            map.put("fechaEmision", this.fechaEmision);
+            map.put("reservaId", this.reservaId);
+            map.put("codigoReserva", this.codigoReserva);
+            return map;
+        }
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
  * Base URL: /api/reservas
  */
 @RestController
-@RequestMapping("/reservas")
+@RequestMapping("/api/reservas")
 @RequiredArgsConstructor
 public class ReservaController {
 

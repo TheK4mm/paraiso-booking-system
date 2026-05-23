@@ -14,13 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class HabitacionService {
+public class HabitacionService implements IViewMapService<HabitacionDTO.Response> {
 
     private final HabitacionRepository habitacionRepository;
     private final TipoHabitacionRepository tipoHabitacionRepository;
@@ -32,6 +33,18 @@ public class HabitacionService {
 
     public HabitacionDTO.Response findById(Long id) {
         return toResponse(getHabitacionOrThrow(id));
+    }
+
+    @Override
+    public List<Map<String, Object>> findAllAsMap() {
+        return findAll().stream()
+                .map(HabitacionDTO.Response::toMap)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> findByIdAsMap(Long id) {
+        return findById(id).toMap();
     }
 
     public List<HabitacionDTO.Response> findDisponibles(LocalDate entrada, LocalDate salida) {
