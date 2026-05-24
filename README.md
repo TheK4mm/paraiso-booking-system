@@ -4,8 +4,6 @@ Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **ful
 =======
 ---
 
-Sistema de Gestión de Reservas para el **Hotel Paraíso** — API REST completa desarrollada con **Spring Boot 3**, **Spring Data JPA** y **PostgreSQL**.
-
 El proyecto expone simultáneamente:
 - Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
 - Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
