@@ -1,12 +1,8 @@
 # Hotel Paraíso — Sistema Full-Stack
 
-<<<<<<< HEAD
 Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
-=======
----
 
-Sistema de Gestión de Reservas para el **Hotel Paraíso** — API REST completa desarrollada con **Spring Boot 3**, **Spring Data JPA** y **PostgreSQL**.
->>>>>>> 43559f1473a8c7aee5250d1c087e1c79cfe88827
+---
 
 El proyecto expone simultáneamente:
 - Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
@@ -94,35 +90,6 @@ El proyecto sigue una **arquitectura en capas** con separación clara de respons
               │       PostgreSQL         │
               └──────────────────────────┘
 ```
-=======
-El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades:
-┌──────────────────────────────────────────────────────┐
-│            CLIENT (Postman / Frontend)               │
-└────────────────────────┬─────────────────────────────┘
-                         │ HTTP JSON
-┌────────────────────────▼─────────────────────────────┐
-│              CONTROLLER LAYER                        │
-│  @RestController — Recibe requests, delega al service│
-│  Valida con @Valid, retorna ResponseEntity           │
-└────────────────────────┬─────────────────────────────┘
-                         │ DTOs
-┌────────────────────────▼─────────────────────────────┐
-│               SERVICE LAYER                          │
-│  @Service — Lógica de negocio, transacciones         │
-│  Valida reglas, mapea entidades ↔ DTOs               │
-└────────────────────────┬─────────────────────────────┘
-                         │ Entities
-┌────────────────────────▼─────────────────────────────┐
-│             REPOSITORY LAYER                         │
-│  @Repository — Spring Data JPA                       │
-│  JPQL queries, métodos derivados                     │
-└────────────────────────┬─────────────────────────────┘
-                         │ SQL
-┌────────────────────────▼─────────────────────────────┐
-│              PostgreSQL DATABASE                     │
-│  8 tablas principales + 2 tablas intermedias (N:M)   │
-└──────────────────────────────────────────────────────┘
->>>>>>> 43559f1473a8c7aee5250d1c087e1c79cfe88827
 
 ---
 
