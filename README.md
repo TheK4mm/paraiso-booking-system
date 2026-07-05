@@ -8,6 +8,14 @@ El proyecto expone simultáneamente:
 
 ---
 
+# Vista de la aplicación
+
+![Dashboard](docs/screenshots/dashboard.png)
+![Tipo de habitaciones](docs/screenshots/tipos-habitaciones.png)
+![Agregar un cliente](docs/screenshots/agregar-cliente.png)
+
+---
+
 ## Descripción
 
 El sistema centraliza la operación del Hotel Paraíso permitiendo:
