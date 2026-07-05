@@ -2,18 +2,13 @@
 
 Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
 
-<<<<<<< HEAD
----
-
-=======
->>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
 El proyecto expone simultáneamente:
 - Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
 - Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
 
-## Descripción
-
 ---
+
+## Descripción
 
 El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
@@ -26,8 +21,6 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 - **Control de empleados** — Recepcionistas y personal que gestiona las reservas
 
 ### Alcance
-
----
 
 | Incluido | No incluido |
 |----------|-------------|
@@ -58,12 +51,11 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 ---
 
-```
-
 ## Arquitectura
 
 El proyecto sigue una arquitectura en capas con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
 
+```
 ┌────────────────────────────┐    ┌────────────────────────────┐
 │  Cliente externo / Postman │    │  Navegador (Thymeleaf)     │
 └─────────────┬──────────────┘    └─────────────┬──────────────┘
@@ -90,12 +82,9 @@ El proyecto sigue una arquitectura en capas con separación clara de responsabil
               ┌────────────▼─────────────┐
               │       PostgreSQL         │
               └──────────────────────────┘
-<<<<<<< HEAD
 ```
 
 ---
-=======
->>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
 
 ## Modelo de Datos
 
@@ -114,19 +103,12 @@ El proyecto sigue una arquitectura en capas con separación clara de responsabil
 
 ### Máquina de Estados — Reserva
 
-
+```
 PENDIENTE ──confirmar──▶ CONFIRMADA ──check-in──▶ CHECKIN ──check-out──▶ CHECKOUT
     │            │                                   │
     │            └──cancelar──┐                    no_show ──▶ NO_SHOW
     └─cancelar─▶ CANCELADA ◄──┘
-
-
-## Maquina de Estados - Reserva
-
-  PENDIENTE ──── confirmar ──→ CONFIRMADA ──── check-in ──→ CHECKIN ──── check-out ──→ CHECKOUT
-      │               │                                          │
-      └── cancelar ───┘                                    no_show ──→ NO_SHOW
-                      └─────────────── cancelar ──────────────────┘
+```
 
 Las transiciones inválidas retornan HTTP 422 con mensaje descriptivo.
 
@@ -149,6 +131,7 @@ public Map<String, Object> toMap() {
     // ...
     return map;
 }
+```
 
 ### 2) Services con `findAllAsMap()` / `findByIdAsMap()`
 
@@ -159,6 +142,7 @@ public interface IViewMapService<R> {
     List<Map<String, Object>> findAllAsMap();
     Map<String, Object> findByIdAsMap(Long id);
 }
+```
 
 Además, `TipoHabitacionService` implementa `ICategoryService` (que extiende `IViewMapService`) y expone el alias semántico `getAllCategoriesAsMap()`.
 
@@ -171,6 +155,7 @@ public List<Map<String, Object>> findAllAsMap() {
             .map(ClienteDTO.Response::toMap)
             .collect(Collectors.toList());
 }
+```
 
 ### 3) ViewControllers: construyen columnas + invocan `findAllAsMap()`
 
@@ -189,6 +174,7 @@ public String list(Model model) {
     model.addAttribute("entityPath", "/clientes");
     return "pages/list";
 }
+```
 
 ### 4) Un único template `pages/list.html`
 
@@ -197,6 +183,7 @@ Renderiza cualquier entidad. Itera columnas y filas (Maps):
 ```html
 <th th:each="col : ${columns}" th:text="${col.label}"></th>
 <td th:each="col : ${columns}" th:text="${row.get(col.key)}"></td>
+```
 
 ### 5) Un único template `pages/form.html`
 
@@ -248,6 +235,7 @@ Entidades disponibles en la UI:
 
 ## Estructura del Proyecto
 
+```
 hotel-paraiso
 ├── pom.xml
 ├── db/
@@ -307,7 +295,7 @@ hotel-paraiso
             ├── BadRequestException.java
             ├── BusinessException.java
             └── GlobalExceptionHandler.java
-            └── GlobalExceptionHandler.javaç
+```
 
 ---
 
@@ -330,5 +318,3 @@ hotel-paraiso
 - Se introdujeron las interfaces `IViewMapService<R>` y `ICategoryService`, sin alterar la firma de los métodos `findAll()/findById()/create/update/delete` previos.
 - Los DTOs conservan su estructura `Request` / `Response` original; solo se añadió o completó el método `toMap()` en cada Response con claves en español coherentes con los campos.
 - La API REST funciona igual que antes — únicamente cambia el prefijo unificado a `/api/...`.
-
----
