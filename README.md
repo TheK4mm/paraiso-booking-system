@@ -2,11 +2,8 @@
 
 Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
 
-<<<<<<< HEAD
 ---
 
-=======
->>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
 El proyecto expone simultáneamente:
 - Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
 - Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
@@ -58,8 +55,6 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 ---
 
-```
-
 ## Arquitectura
 
 El proyecto sigue una arquitectura en capas con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
@@ -90,13 +85,10 @@ El proyecto sigue una arquitectura en capas con separación clara de responsabil
               ┌────────────▼─────────────┐
               │       PostgreSQL         │
               └──────────────────────────┘
-<<<<<<< HEAD
+
 ```
 
----
-=======
->>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
-
+```
 ## Modelo de Datos
 
 ### Entidades
@@ -141,6 +133,7 @@ Para evitar duplicar HTML por cada entidad, el proyecto implementa un patrón ge
 Cada `DTO.Response` expone su contenido como `Map<String, Object>` con claves específicas y orden estable (`LinkedHashMap`). Estas claves son las que la vista referencia.
 
 ```java
+```
 public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("id", this.id);
@@ -153,6 +146,8 @@ public Map<String, Object> toMap() {
 ### 2) Services con `findAllAsMap()` / `findByIdAsMap()`
 
 Todos los servicios implementan la interfaz `IViewMapService<R>`:
+---
+
 
 ```java
 public interface IViewMapService<R> {
@@ -202,8 +197,7 @@ Renderiza cualquier entidad. Itera columnas y filas (Maps):
 
 Sirve tanto para **crear** como para **editar**. El controlador es quien decide pasando `isEdit=true|false` y la URL `action` correspondiente. El fragmento `fragments/form.html` soporta tipos: `text`, `email`, `number`, `date`, `password`, `textarea`, `select`, `multiselect`, `checkbox`.
 
----
-
+```
 ## Endpoints
 
 ### API REST — todas bajo `/api/...`
@@ -244,8 +238,7 @@ Entidades disponibles en la UI:
 | `422` | Regla de negocio | Habitación ya reservada, transición de estado inválida |
 | `500` | Error interno | Error inesperado del servidor |
 
----
-
+```
 ## Estructura del Proyecto
 
 hotel-paraiso
