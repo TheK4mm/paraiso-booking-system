@@ -2,8 +2,11 @@
 
 Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
 
+<<<<<<< HEAD
 ---
 
+=======
+>>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
 El proyecto expone simultáneamente:
 - Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
 - Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
@@ -59,10 +62,8 @@ El sistema centraliza la operación del Hotel Paraíso permitiendo:
 
 ## Arquitectura
 
-<<<<<<< HEAD
-El proyecto sigue una **arquitectura en capas** con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
+El proyecto sigue una arquitectura en capas con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
 
-```
 ┌────────────────────────────┐    ┌────────────────────────────┐
 │  Cliente externo / Postman │    │  Navegador (Thymeleaf)     │
 └─────────────┬──────────────┘    └─────────────┬──────────────┘
@@ -89,9 +90,12 @@ El proyecto sigue una **arquitectura en capas** con separación clara de respons
               ┌────────────▼─────────────┐
               │       PostgreSQL         │
               └──────────────────────────┘
+<<<<<<< HEAD
 ```
 
 ---
+=======
+>>>>>>> 94a2ceeabb71596dd5e5cdda9ce1608346ae7fc1
 
 ## Modelo de Datos
 
@@ -108,16 +112,14 @@ El proyecto sigue una **arquitectura en capas** con separación clara de respons
 | `Pago` | Pagos parciales o totales asociados a una reserva |
 | `Factura` | Documento fiscal con subtotal, IVA y descuentos |
 
-<<<<<<< HEAD
 ### Máquina de Estados — Reserva
 
-```
+
 PENDIENTE ──confirmar──▶ CONFIRMADA ──check-in──▶ CHECKIN ──check-out──▶ CHECKOUT
     │            │                                   │
     │            └──cancelar──┐                    no_show ──▶ NO_SHOW
     └─cancelar─▶ CANCELADA ◄──┘
-```
-=======
+
 
 ## Maquina de Estados - Reserva
 
@@ -125,7 +127,6 @@ PENDIENTE ──confirmar──▶ CONFIRMADA ──check-in──▶ CHECKIN �
       │               │                                          │
       └── cancelar ───┘                                    no_show ──→ NO_SHOW
                       └─────────────── cancelar ──────────────────┘
->>>>>>> 43559f1473a8c7aee5250d1c087e1c79cfe88827
 
 Las transiciones inválidas retornan HTTP 422 con mensaje descriptivo.
 
@@ -148,7 +149,6 @@ public Map<String, Object> toMap() {
     // ...
     return map;
 }
-```
 
 ### 2) Services con `findAllAsMap()` / `findByIdAsMap()`
 
@@ -159,7 +159,6 @@ public interface IViewMapService<R> {
     List<Map<String, Object>> findAllAsMap();
     Map<String, Object> findByIdAsMap(Long id);
 }
-```
 
 Además, `TipoHabitacionService` implementa `ICategoryService` (que extiende `IViewMapService`) y expone el alias semántico `getAllCategoriesAsMap()`.
 
@@ -172,7 +171,6 @@ public List<Map<String, Object>> findAllAsMap() {
             .map(ClienteDTO.Response::toMap)
             .collect(Collectors.toList());
 }
-```
 
 ### 3) ViewControllers: construyen columnas + invocan `findAllAsMap()`
 
@@ -191,7 +189,6 @@ public String list(Model model) {
     model.addAttribute("entityPath", "/clientes");
     return "pages/list";
 }
-```
 
 ### 4) Un único template `pages/list.html`
 
@@ -200,7 +197,6 @@ Renderiza cualquier entidad. Itera columnas y filas (Maps):
 ```html
 <th th:each="col : ${columns}" th:text="${col.label}"></th>
 <td th:each="col : ${columns}" th:text="${row.get(col.key)}"></td>
-```
 
 ### 5) Un único template `pages/form.html`
 
@@ -310,12 +306,8 @@ hotel-paraiso
             ├── ResourceNotFoundException.java
             ├── BadRequestException.java
             ├── BusinessException.java
-<<<<<<< HEAD
             └── GlobalExceptionHandler.java
-```
-=======
             └── GlobalExceptionHandler.javaç
->>>>>>> 43559f1473a8c7aee5250d1c087e1c79cfe88827
 
 ---
 
