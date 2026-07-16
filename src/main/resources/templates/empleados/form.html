@@ -21,17 +21,17 @@
             <form th:action="${editId != null} ? @{/empleados/{id}(id=${editId})} : @{/empleados}"
                   th:object="${request}" method="post" novalidate>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('numeroDocumento', 'Número de documento', 'text', true)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('cargo', 'Cargo', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('cargo', 'Cargo', 'text', true)}"></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('emailCorporativo', 'Email corporativo', 'email', false)}"></div>
-                    <div class="col-md-3" th:insert="~{fragments/campos :: input('telefonoExtension', 'Extensión', 'text', false)}"></div>
-                    <div class="col-md-3" th:insert="~{fragments/campos :: input('fechaContratacion', 'Fecha de contratación', 'date', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('emailCorporativo', 'Email corporativo', 'email', false)}"></div>
+                    <div class="col-md-3" th:insert="~{fragments/campos :: entrada('telefonoExtension', 'Extensión', 'text', false)}"></div>
+                    <div class="col-md-3" th:insert="~{fragments/campos :: entrada('fechaContratacion', 'Fecha de contratación', 'date', true)}"></div>
                 </div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/empleados}" class="btn btn-outline-secondary">Cancelar</a>

@@ -18,8 +18,8 @@
         </div>
 
         <div class="row g-2">
-            <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-            <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+            <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+            <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
         </div>
 
         <div class="row g-2">
@@ -37,13 +37,13 @@
                     <div class="invalid-feedback" th:errors="*{tipoDocumento}"></div>
                 </div>
             </div>
-            <div class="col-md-7" th:insert="~{fragments/campos :: input('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+            <div class="col-md-7" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
         </div>
 
-        <div th:insert="~{fragments/campos :: input('email', 'Email', 'email', true)}"></div>
-        <div th:insert="~{fragments/campos :: input('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
-        <div th:insert="~{fragments/campos :: input('password', 'Contraseña', 'password', true)}"></div>
-        <div th:insert="~{fragments/campos :: input('confirmarPassword', 'Confirmar contraseña', 'password', true)}"></div>
+        <div th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
+        <div th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
+        <div th:insert="~{fragments/campos :: entrada('password', 'Contraseña', 'password', true)}"></div>
+        <div th:insert="~{fragments/campos :: entrada('confirmarPassword', 'Confirmar contraseña', 'password', true)}"></div>
 
         <button type="submit" class="btn btn-primary w-100">Crear cuenta</button>
         <p class="text-muted small text-center mt-3 mb-0">

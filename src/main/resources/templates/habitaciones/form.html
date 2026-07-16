@@ -21,7 +21,7 @@
             <form th:action="${editId != null} ? @{/habitaciones/{id}(id=${editId})} : @{/habitaciones}"
                   th:object="${request}" method="post" novalidate>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('numero', 'Número', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('numero', 'Número', 'text', true)}"></div>
                     <div class="col-md-6" th:insert="~{fragments/campos :: numero('piso', 'Piso', true, '1')}"></div>
                 </div>
                 <div class="mb-3">
@@ -43,7 +43,7 @@
                                          (${e.name() == 'MANTENIMIENTO'} ? 'Mantenimiento' : 'Bloqueada'))">Estado</option>
                     </select>
                 </div>
-                <div th:insert="~{fragments/campos :: textarea('descripcion', 'Descripción', false)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/habitaciones}" class="btn btn-outline-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary">

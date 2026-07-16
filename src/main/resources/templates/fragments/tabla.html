@@ -2,7 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!-- Cabecera ordenable: conserva filtros vigentes, alterna asc/desc y reinicia página -->
+<!-- Cabecera ordenable: conserva filtros vigentes, alterna asc/desc y reinicia página.
+     OJO: el fragment se llama "th" (como la etiqueta); el markup selector también casa
+     por nombre de etiqueta, así que este archivo no debe contener otros <th> crudos. -->
 <th th:fragment="th(page, campo, etiqueta)" class="hp-sortable"
     th:with="orden=${page.sort.getOrderFor(campo)}">
     <a th:href="${currentPath + queryBaseSort + 'sort=' + campo + ',' + (orden != null and orden.direction.name() == 'ASC' ? 'desc' : 'asc')}">

@@ -36,7 +36,7 @@
                     <div class="col-md-6" th:insert="~{fragments/campos :: numero('descuento', 'Descuento (COP)', false, '0.01')}"></div>
                     <div class="col-md-6" th:insert="~{fragments/campos :: numero('impuestoPorcentaje', 'IVA % (19 por defecto)', false, '0.01')}"></div>
                 </div>
-                <div th:insert="~{fragments/campos :: textarea('notas', 'Notas', false)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('notas', 'Notas', false)}"></div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/facturas}" class="btn btn-outline-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary">

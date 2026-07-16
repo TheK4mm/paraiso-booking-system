@@ -20,14 +20,14 @@
         <div class="card-body p-4">
             <form th:action="${editId != null} ? @{/tipos-habitacion/{id}(id=${editId})} : @{/tipos-habitacion}"
                   th:object="${request}" method="post" novalidate>
-                <div th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-                <div th:insert="~{fragments/campos :: textarea('descripcion', 'Descripción', false)}"></div>
+                <div th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
                 <div class="row">
                     <div class="col-md-6" th:insert="~{fragments/campos :: numero('capacidadMaxima', 'Capacidad máxima (personas)', true, '1')}"></div>
                     <div class="col-md-6" th:insert="~{fragments/campos :: numero('precioBaseNoche', 'Precio base por noche (COP)', true, '0.01')}"></div>
                 </div>
-                <div th:insert="~{fragments/campos :: input('imagen', 'Imagen pública (ruta, ej. /img/tipos/junior-suite.jpg)', 'text', false)}"></div>
-                <div th:insert="~{fragments/campos :: input('comodidades', 'Comodidades (separadas por coma)', 'text', false)}"></div>
+                <div th:insert="~{fragments/campos :: entrada('imagen', 'Imagen pública (ruta, ej. /img/tipos/junior-suite.jpg)', 'text', false)}"></div>
+                <div th:insert="~{fragments/campos :: entrada('comodidades', 'Comodidades (separadas por coma)', 'text', false)}"></div>
                 <p class="text-muted small">
                     La imagen y las comodidades se muestran en el portal público de reservas.
                 </p>

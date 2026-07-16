@@ -21,21 +21,21 @@
             <form th:action="${editId != null} ? @{/clientes/{id}(id=${editId})} : @{/clientes}"
                   th:object="${request}" method="post" novalidate>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
                 </div>
                 <div class="row">
                     <div class="col-md-6"
-                         th:insert="~{fragments/campos :: select('tipoDocumento', 'Tipo de documento', true, ${tiposDocumento}, null)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+                         th:insert="~{fragments/campos :: seleccion('tipoDocumento', 'Tipo de documento', true, ${tiposDocumento}, null)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('email', 'Email', 'email', true)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('telefono', 'Teléfono', 'text', false)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono', 'text', false)}"></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('direccion', 'Dirección', 'text', false)}"></div>
-                    <div class="col-md-6" th:insert="~{fragments/campos :: input('pais', 'País', 'text', false)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('direccion', 'Dirección', 'text', false)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('pais', 'País', 'text', false)}"></div>
                 </div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/clientes}" class="btn btn-outline-secondary">Cancelar</a>

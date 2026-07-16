@@ -51,8 +51,8 @@
                     </select>
                     <div class="form-text">Debe pertenecer a la misma reserva del pago.</div>
                 </div>
-                <div th:insert="~{fragments/campos :: input('referenciaTransaccion', 'Referencia de transacción', 'text', false)}"></div>
-                <div th:insert="~{fragments/campos :: textarea('descripcion', 'Descripción', false)}"></div>
+                <div th:insert="~{fragments/campos :: entrada('referenciaTransaccion', 'Referencia de transacción', 'text', false)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <a th:href="@{/pagos}" class="btn btn-outline-secondary">Cancelar</a>
                     <button type="submit" class="btn btn-primary">

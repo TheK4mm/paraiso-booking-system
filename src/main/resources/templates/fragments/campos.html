@@ -5,9 +5,15 @@
   Campos de formulario tipados sobre th:object. El nombre del campo se
   inyecta por preprocesamiento (__${campo}__), lo que habilita th:field,
   th:errors y la clase is-invalid sin duplicar marcado por entidad.
+
+  IMPORTANTE: nunca nombrar un fragment como una etiqueta HTML (input,
+  select, textarea...). El selector de fragmentos (~{... :: nombre}) es un
+  markup selector: además de th:fragment casa por NOMBRE DE ETIQUETA, y
+  arrastraría los <input>/<select> crudos de los demás fragments de este
+  archivo, duplicando campos en el formulario destino.
 -->
 
-<div th:fragment="input(campo, etiqueta, tipo, requerido)" class="mb-3">
+<div th:fragment="entrada(campo, etiqueta, tipo, requerido)" class="mb-3">
     <label th:for="${campo}" class="form-label">
         <span th:text="${etiqueta}">Etiqueta</span>
         <span th:if="${requerido}" class="hp-required">*</span>
@@ -27,7 +33,7 @@
     <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
 </div>
 
-<div th:fragment="textarea(campo, etiqueta, requerido)" class="mb-3">
+<div th:fragment="areaTexto(campo, etiqueta, requerido)" class="mb-3">
     <label th:for="${campo}" class="form-label">
         <span th:text="${etiqueta}">Etiqueta</span>
         <span th:if="${requerido}" class="hp-required">*</span>
@@ -38,7 +44,7 @@
 </div>
 
 <!-- opciones: lista de objetos con value/label (ver ViewSupport.option) o Map -->
-<div th:fragment="select(campo, etiqueta, requerido, opciones, placeholder)" class="mb-3">
+<div th:fragment="seleccion(campo, etiqueta, requerido, opciones, placeholder)" class="mb-3">
     <label th:for="${campo}" class="form-label">
         <span th:text="${etiqueta}">Etiqueta</span>
         <span th:if="${requerido}" class="hp-required">*</span>

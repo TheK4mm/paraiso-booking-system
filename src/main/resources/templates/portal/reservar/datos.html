@@ -65,8 +65,8 @@
                             <!-- Invitado: formulario completo -->
                             <th:block th:unless="${clienteAutenticado}">
                                 <div class="row g-2">
-                                    <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-                                    <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+                                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
                                 </div>
                                 <div class="row g-2">
                                     <div class="col-md-5">
@@ -83,11 +83,11 @@
                                             <div class="invalid-feedback" th:errors="*{tipoDocumento}"></div>
                                         </div>
                                     </div>
-                                    <div class="col-md-7" th:insert="~{fragments/campos :: input('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+                                    <div class="col-md-7" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
                                 </div>
                                 <div class="row g-2">
-                                    <div class="col-md-7" th:insert="~{fragments/campos :: input('email', 'Email', 'email', true)}"></div>
-                                    <div class="col-md-5" th:insert="~{fragments/campos :: input('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
+                                    <div class="col-md-7" th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
+                                    <div class="col-md-5" th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
                                 </div>
                                 <p class="text-muted small">
                                     <i class="bi bi-info-circle me-1"></i>
@@ -96,7 +96,7 @@
                                 </p>
                             </th:block>
 
-                            <div th:insert="~{fragments/campos :: textarea('observaciones', 'Observaciones (opcional)', false)}"></div>
+                            <div th:insert="~{fragments/campos :: areaTexto('observaciones', 'Observaciones (opcional)', false)}"></div>
 
                             <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
                                 <i class="bi bi-check2-circle me-1"></i>Confirmar reserva

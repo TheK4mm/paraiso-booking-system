@@ -28,12 +28,12 @@
                                 <h2 class="h6 fw-bold mb-3">Datos personales</h2>
                                 <form th:action="@{/mi-cuenta/perfil}" th:object="${perfil}" method="post" novalidate>
                                     <div class="row g-2">
-                                        <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
-                                        <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+                                        <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                                        <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
                                     </div>
-                                    <div th:insert="~{fragments/campos :: input('telefono', 'Teléfono', 'tel', false)}"></div>
-                                    <div th:insert="~{fragments/campos :: input('direccion', 'Dirección', 'text', false)}"></div>
-                                    <div th:insert="~{fragments/campos :: input('pais', 'País', 'text', false)}"></div>
+                                    <div th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono', 'tel', false)}"></div>
+                                    <div th:insert="~{fragments/campos :: entrada('direccion', 'Dirección', 'text', false)}"></div>
+                                    <div th:insert="~{fragments/campos :: entrada('pais', 'País', 'text', false)}"></div>
                                     <button type="submit" class="btn btn-primary">Guardar cambios</button>
                                 </form>
                             </div>
