@@ -3,9 +3,11 @@ package com.hotel.paraiso.common.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.FlashMap;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
@@ -31,6 +33,7 @@ public class MvcExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND) // sin esto la página 404 saldría con HTTP 200
     public String handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         log.debug("Recurso no encontrado en vista {}: {}", request.getRequestURI(), ex.getMessage());
         return "error/404";
