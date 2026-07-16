@@ -1,12 +1,20 @@
-# Hotel Paraíso — Sistema de Gestión Hotelera · v2.0
+# Hotel Paraíso — Plataforma Hotelera · v2.1
 
-Aplicación **full-stack profesional** para la operación de un hotel: reservas con máquina de estados, facturación con IVA, pagos parciales, calendario de ocupación, dashboard con métricas y control de acceso por roles.
+Aplicación **full-stack profesional** para la operación de un hotel: **portal público de reservas para huéspedes** (landing page, disponibilidad en línea, reserva como invitado o con cuenta) + back-office completo con reservas con máquina de estados, facturación con IVA, pagos parciales, calendario de ocupación, dashboard con métricas y control de acceso por roles.
 
 **Stack:** Java 17 · Spring Boot 4.1 (Framework 7, Security 7, Jackson 3) · Spring Data JPA · Flyway 12 · PostgreSQL 16+ · Thymeleaf · Bootstrap 5 (vendorizado) · Chart.js · MapStruct · Lombok · Testcontainers.
 
 ---
 
 ## Características
+
+### Portal público (huéspedes)
+- **Landing page** de marketing en `/`: hero, habitaciones con fotos y comodidades, servicios, galería, testimonios, ubicación y CTAs — sin exigir login.
+- **Flujo de reservas sin registro** (`/reservar`): fechas → disponibilidad real (excluye solapes bajo la misma regla que el back-office) → tarjetas con foto/precio/total de estancia → datos del huésped → código de confirmación. El invitado queda registrado como cliente por su email (get-or-create, sin duplicados).
+- **Consulta de reserva por código + email** (`/consulta-reserva`), con mensaje único anti-enumeración.
+- **Rol `CLIENTE` con portal propio** (`/mi-cuenta`): resumen, historial, detalle con saldos, cancelación (solo PENDIENTE/CONFIRMADA) y edición de perfil. Los clientes inician sesión con su **email**.
+- **Registro con verificación de email**: la cuenta no puede entrar y la ficha de cliente solo se crea/vincula tras abrir el enlace de un solo uso (24 h; por log al no haber SMTP). Nadie ve el historial de un email que no controla.
+- **Tres zonas de seguridad**: pública / cliente (`/mi-cuenta/**`) / back-office (todo lo demás, default-cerrado con `anyRequest().hasAnyRole("ADMIN","RECEPCIONISTA")`). La API `/api/**` es exclusiva del personal.
 
 ### Operación
 - **Reservas** con máquina de estados (`PENDIENTE → CONFIRMADA → CHECKIN → CHECKOUT`, con `CANCELADA` y `NO_SHOW`) y acciones contextuales en la interfaz.
@@ -52,10 +60,11 @@ mvn spring-boot:run
 
 ### Credenciales iniciales (solo desarrollo — cambiar en producción)
 
-| Usuario     | Contraseña     | Rol           |
-|-------------|----------------|---------------|
-| `admin`     | `admin123`     | ADMIN         |
-| `recepcion` | `recepcion123` | RECEPCIONISTA |
+| Usuario                    | Contraseña     | Rol           |
+|----------------------------|----------------|---------------|
+| `admin`                    | `admin123`     | ADMIN         |
+| `recepcion`                | `recepcion123` | RECEPCIONISTA |
+| `cliente@hotelparaiso.com` | `cliente123`   | CLIENTE (portal de huéspedes) |
 
 ### Perfiles
 
@@ -85,7 +94,10 @@ src/main/java/com/hotel/paraiso/
 ├── reserva/           Reserva + máquina de estados + CalendarioService
 ├── facturacion/       Factura y Pago (reglas cruzadas de saldo/estado)
 ├── dashboard/         Métricas agregadas (consultas nativas, sin entidades en memoria)
-├── security/          Usuario, roles, SecurityConfig, registro/recuperación, admin de cuentas
+├── portal/            Cara pública: landing, wizard /reservar, consulta por código,
+│   └── cuenta/        y portal del huésped /mi-cuenta (rol CLIENTE)
+├── security/          Usuario, roles, SecurityConfig (3 zonas), registro de huéspedes
+│                      con verificación de email, recuperación, admin de cuentas
 └── common/
     ├── audit/         AuditableEntity, AuditorAware, ActivityLog + listeners de eventos
     ├── crud/          AbstractCrudService (CRUD genérico de catálogos), BaseRepository, CrudMapper
@@ -150,4 +162,5 @@ Migraciones en `src/main/resources/db/migration`:
 - `V1__esquema_base.sql` — dominio completo: tablas, CHECKs, FKs con políticas, índices, columnas de auditoría, `version` (lock optimista) y secuencias de códigos.
 - `V2__seguridad_auditoria.sql` — `usuarios`, `password_reset_tokens`, `activity_log`.
 - `V3__seed_admin.sql` — usuario administrador inicial (hash bcrypt vía `pgcrypto`).
-- `db/seed-dev/V1000__datos_demo.sql`, `db/seed-dev/V1001__usuarios_demo.sql` — datos de demostración (solo perfil `dev`; fuera del árbol `db/migration` para que prod nunca los aplique).
+- `V4__portal_publico.sql` — rol `CLIENTE`, vínculo `usuarios.cliente_id`, verificación de email (`tokens_verificacion_email` con payload de la ficha pendiente), `imagen`/`comodidades` en tipos de habitación.
+- `db/seed-dev/V1000__datos_demo.sql`, `V1001__usuarios_demo.sql`, `V1002__portal_demo.sql` — datos de demostración (solo perfil `dev`; fuera del árbol `db/migration` para que prod nunca los aplique). En dev `flyway.out-of-order=true`: las migraciones reales nuevas (V5…) siempre quedan "detrás" de los seeds V1000+.
