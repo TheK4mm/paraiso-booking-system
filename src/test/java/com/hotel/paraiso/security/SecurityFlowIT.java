@@ -15,8 +15,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 /**
  * Reglas de seguridad de extremo a extremo: redirección a login, 401 JSON
@@ -121,6 +125,48 @@ class SecurityFlowIT {
     @WithMockUser(username = "recepcion", roles = "RECEPCIONISTA")
     void elPersonalNoAccedeAlAreaDeClientes() throws Exception {
         mockMvc.perform(get("/mi-cuenta")).andExpect(status().isForbidden());
+    }
+
+    // ─── Login del modal del portal (AJAX) vs navegación clásica ───
+
+    @Test
+    void elLoginAjaxValidoRespondeJsonSinRedireccion() throws Exception {
+        mockMvc.perform(post("/login").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("username", "admin").param("password", "admin123"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(content().json("{\"redirect\":null}"));
+    }
+
+    @Test
+    void elLoginAjaxInvalidoResponde401ConMensaje() throws Exception {
+        mockMvc.perform(post("/login").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("username", "noexiste").param("password", "mal"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.mensaje").value("Usuario o contraseña incorrectos."));
+    }
+
+    @Test
+    void elLoginClasicoInvalidoConservaLaRedireccionHistorica() throws Exception {
+        mockMvc.perform(post("/login").with(csrf())
+                        .param("username", "noexiste").param("password", "mal"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?error"));
+    }
+
+    @Test
+    void elRegistroAjaxConErroresDevuelveElPaneDelModal() throws Exception {
+        mockMvc.perform(post("/registro").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("nombre", "").param("apellido", "")
+                        .param("tipoDocumento", "").param("numeroDocumento", "")
+                        .param("email", "no-es-un-email").param("telefono", "")
+                        .param("password", "corta").param("confirmarPassword", "distinta"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(view().name("fragments/auth :: registroPane"));
     }
 
     @Test
