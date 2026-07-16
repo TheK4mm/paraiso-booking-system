@@ -43,7 +43,8 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http,
-                                    RolAuthenticationSuccessHandler successHandler) throws Exception {
+                                    RolAuthenticationSuccessHandler successHandler,
+                                    RolAuthenticationFailureHandler failureHandler) throws Exception {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
@@ -71,6 +72,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(successHandler)
+                        .failureHandler(failureHandler)
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")

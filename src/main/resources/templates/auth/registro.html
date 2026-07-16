@@ -6,54 +6,10 @@
     <title>Crear cuenta</title>
 </head>
 <body>
+<!-- Fallback clásico del modal del portal (ver auth/login.html).
+     El formulario es el mismo fragment que usa el modal. -->
 <section layout:fragment="content">
-    <h1 class="h5 text-center mb-1">Crea tu cuenta de huésped</h1>
-    <p class="text-muted small text-center mb-4">
-        Guarda tus datos, consulta tu historial y gestiona tus reservas
-    </p>
-
-    <form th:action="@{/registro}" th:object="${registro}" method="post" novalidate>
-        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
-            <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
-        </div>
-
-        <div class="row g-2">
-            <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
-            <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
-        </div>
-
-        <div class="row g-2">
-            <div class="col-md-5">
-                <div class="mb-3">
-                    <label for="tipoDocumento" class="form-label">Documento <span class="hp-required">*</span></label>
-                    <select class="form-select" id="tipoDocumento" th:field="*{tipoDocumento}"
-                            th:classappend="${#fields.hasErrors('tipoDocumento')} ? 'is-invalid'">
-                        <option value="">Tipo…</option>
-                        <option value="CC">Cédula de ciudadanía</option>
-                        <option value="CE">Cédula de extranjería</option>
-                        <option value="PASAPORTE">Pasaporte</option>
-                        <option value="NIT">NIT</option>
-                    </select>
-                    <div class="invalid-feedback" th:errors="*{tipoDocumento}"></div>
-                </div>
-            </div>
-            <div class="col-md-7" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
-        </div>
-
-        <div th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
-        <div th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
-        <div th:insert="~{fragments/campos :: entrada('password', 'Contraseña', 'password', true)}"></div>
-        <div th:insert="~{fragments/campos :: entrada('confirmarPassword', 'Confirmar contraseña', 'password', true)}"></div>
-
-        <button type="submit" class="btn btn-primary w-100">Crear cuenta</button>
-        <p class="text-muted small text-center mt-3 mb-0">
-            Te enviaremos un enlace para verificar tu email antes del primer ingreso.
-        </p>
-    </form>
-
-    <p class="text-center small text-muted mt-4 mb-0">
-        ¿Ya tienes cuenta? <a th:href="@{/login}" class="text-decoration-none">Iniciar sesión</a>
-    </p>
+    <div th:insert="~{fragments/auth :: registroPane}"></div>
 </section>
 </body>
 </html>
