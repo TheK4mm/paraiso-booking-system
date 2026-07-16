@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Cabecera ordenable: conserva filtros vigentes, alterna asc/desc y reinicia página -->
+<th th:fragment="th(page, campo, etiqueta)" class="hp-sortable"
+    th:with="orden=${page.sort.getOrderFor(campo)}">
+    <a th:href="${currentPath + queryBaseSort + 'sort=' + campo + ',' + (orden != null and orden.direction.name() == 'ASC' ? 'desc' : 'asc')}">
+        <span th:text="${etiqueta}">Columna</span>
+        <i th:if="${orden != null}"
+           th:class="${orden.direction.name() == 'ASC'} ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill'"></i>
+    </a>
+</th>
+
+<!-- Paginación: conserva todos los query params menos page -->
+<nav th:fragment="paginacion(page)" th:if="${page.totalPages > 1}"
+     class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2 border-top">
+    <span class="small text-muted"
+          th:text="|Mostrando ${page.numberOfElements == 0 ? 0 : page.number * page.size + 1}–${page.number * page.size + page.numberOfElements} de ${page.totalElements}|">
+        Mostrando 1–20 de 100
+    </span>
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a class="page-link" th:href="${currentPath + queryBase + 'page=' + (page.number - 1)}"
+               aria-label="Anterior">&laquo;</a>
+        </li>
+        <li class="page-item"
+            th:each="i : ${#numbers.sequence(T(java.lang.Math).max(0, page.number - 2), T(java.lang.Math).min(page.totalPages - 1, page.number + 2))}"
+            th:classappend="${i == page.number} ? 'active'">
+            <a class="page-link" th:href="${currentPath + queryBase + 'page=' + i}" th:text="${i + 1}">1</a>
+        </li>
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a class="page-link" th:href="${currentPath + queryBase + 'page=' + (page.number + 1)}"
+               aria-label="Siguiente">&raquo;</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Total simple cuando no hay paginación -->
+<div th:fragment="total(page)" th:if="${page.totalPages <= 1 and page.totalElements > 0}"
+     class="px-3 py-2 border-top small text-muted"
+     th:text="|${page.totalElements} registro(s)|">
+</div>
+
+</body>
+</html>

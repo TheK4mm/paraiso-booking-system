@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Registro de actividad</h1>
+            <p class="hp-page-sub">Quién hizo qué y cuándo: reservas, pagos, facturas y accesos</p>
+        </div>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/actividad}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control"
+                   placeholder="Usuario, acción o detalle…">
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Desde</label>
+            <input type="date" name="desde" th:value="${desde}" class="form-control" onchange="this.form.submit()">
+        </div>
+        <div>
+            <label class="form-label small text-muted mb-1">Hasta</label>
+            <input type="date" name="hasta" th:value="${hasta}" class="form-control" onchange="this.form.submit()">
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/actividad}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-clock-history', 'Sin actividad',
+                          'Aún no hay eventos registrados con estos filtros.', null, null)}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'creadoEn', 'Fecha')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'username', 'Usuario')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'accion', 'Acción')}"></th>
+                    <th>Entidad</th>
+                    <th>Detalle</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${page.content}">
+                    <td class="small text-muted text-nowrap"
+                        th:text="${#temporals.format(a.creadoEn, 'dd MMM yyyy HH:mm:ss')}">fecha</td>
+                    <td class="fw-semibold" th:text="${a.username}">usuario</td>
+                    <td>
+                        <span class="hp-badge"
+                              th:classappend="${#strings.startsWith(a.accion, 'LOGIN_FALLIDO')} ? 'hp-badge-danger' :
+                                              (${#strings.startsWith(a.accion, 'LOGIN') or #strings.startsWith(a.accion, 'LOGOUT')} ? 'hp-badge-neutral' :
+                                              (${#strings.contains(a.accion, 'CANCELAD') or #strings.contains(a.accion, 'ANULADA')} ? 'hp-badge-danger' : 'hp-badge-info'))"
+                              th:text="${a.accion}">ACCION</span>
+                    </td>
+                    <td class="small text-muted">
+                        <span th:if="${a.tipoEntidad != null}" th:text="|${a.tipoEntidad} #${a.entidadId}|">Entidad</span>
+                        <span th:if="${a.tipoEntidad == null}">—</span>
+                    </td>
+                    <td class="small" th:text="${a.detalle} ?: '—'">detalle</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -4,45 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Hotel Paraíso — hotel reservation management system. Spring Boot 3.2.4 / Java 17 full-stack app exposing both a REST API (`/api/...`) and a server-rendered Thymeleaf UI (`/`) over the same service layer. PostgreSQL database. Code identifiers, comments, commit messages, and the domain language are all in **Spanish** — follow that convention.
+Hotel Paraíso v2.0 — hotel management system. Spring Boot 4.1 (Framework 7, Security 7, Jackson 3) / Java 17 full-stack app: REST API (`/api/...`, HTTP Basic) + server-rendered Thymeleaf UI (`/`, form login) over one service layer. PostgreSQL with Flyway migrations. Code identifiers, comments, commit messages, and the domain language are all in **Spanish** — follow that convention.
+
+Boot 4 is modularized: integrations need their own module (e.g. `spring-boot-flyway`), slice-test annotations live in per-module `-test` artifacts (`org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`, `...webmvc.test.autoconfigure.AutoConfigureMockMvc`, `...jdbc.test.autoconfigure.AutoConfigureTestDatabase`, `...jpa.test.autoconfigure.TestEntityManager`), Testcontainers is NOT managed by the Boot BOM (imported explicitly in dependencyManagement), and Jackson 3 dropped `write-dates-as-timestamps` (ISO-8601 is the default).
 
 ## Commands
 
 ```bash
-mvn clean package -DskipTests      # build
-mvn spring-boot:run                # run (http://localhost:8080)
-java -jar target/hotel-paraiso-1.0.0.jar   # run the packaged jar
-mvn test                           # run tests (none exist yet)
-mvn test -Dtest=ClassName#method   # run a single test
+mvn spring-boot:run                # run (http://localhost:8080, profile dev by default)
+mvn clean package -DskipTests      # build jar
+mvn test                           # unit tests (Mockito)
+mvn verify                         # + Testcontainers ITs (skip automatically without Docker)
+mvn test -Dtest=ClassName#method   # single test
 ```
 
-Database setup: requires local PostgreSQL with database `hotel_paraiso` (credentials in `src/main/resources/application.properties`, default `postgres`/`postgres`). Schema in `db/database.sql`; Hibernate runs with `ddl-auto=update`.
+Database: local PostgreSQL, database `hotel_paraiso` must exist; Flyway creates/updates the schema on startup (`ddl-auto=validate` — never let Hibernate manage schema). Dev seed data comes from `db/seed-dev/` (profile dev only — kept OUTSIDE `db/migration` because Flyway scans that classpath location recursively and prod would otherwise apply the seeds too). To reset dev data: drop/recreate the database and restart.
+
+Dev credentials: `admin`/`admin123` (ADMIN), `recepcion`/`recepcion123` (RECEPCIONISTA). Config via `application.yml` + `application-dev.yml`/`application-prod.yml`; secrets through env vars (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REMEMBER_ME_KEY`).
 
 ## Architecture
 
-Layered, with **two parallel presentation layers** sharing one service layer:
+**Package-by-feature** under `com.hotel.paraiso`: each module (`cliente/`, `empleado/`, `habitacion/` [includes TipoHabitacion], `servicio/`, `reserva/`, `facturacion/` [Factura+Pago], `dashboard/`, `security/`) contains its entity, repository (+Specs), Request/Response DTOs, MapStruct mapper, service, REST controller and view controller. Cross-cutting code lives in `common/{audit,crud,exception,mapper,validation,web}`.
 
-- `controller/` — REST `@RestController`s, all mapped under `/api/...`. The `/api` prefix is declared in each controller's `@RequestMapping` — there is deliberately **no** `server.servlet.context-path` (it was removed to free `/` for Thymeleaf; do not reintroduce it).
-- `controller/view/` — Thymeleaf MVC `@Controller`s at root paths (`/clientes`, `/reservas`, …). Never build entity-specific templates; they feed generic ones (see below).
-- `service/` — all business logic and validation. Classes are `@Transactional(readOnly = true)` with `@Transactional` on mutating methods. `open-in-view=false`, so entities must be fully mapped to DTOs inside the service.
-- `repository/` — Spring Data JPA.
-- `model/` — JPA entities; enums (estados) are nested inside their entity (e.g. `Reserva.EstadoReserva`).
+### Key patterns
 
-### Generic view pattern (DTO ↔ Map ↔ single template)
+- **Catalog CRUD**: Cliente, Empleado, Servicio, TipoHabitacion, Habitacion extend `common/crud/AbstractCrudService` (hooks: `beforeCreate/beforeUpdate` for uniqueness, `applyRelations` for FK resolution, `toDetalle` for counts). **Reserva, Pago, Factura deliberately do NOT** — they have dedicated services with domain logic.
+- **Mapping**: MapStruct with `unmappedTargetPolicy = ERROR` (`common/mapper/MapperCentralConfig`) and `disableBuilder` — every new entity/DTO field must be mapped or explicitly ignored or the build fails. Reserva/Pago/Factura mappers are response-only; their entities are built in services.
+- **Search**: `JpaSpecificationExecutor` + per-module `*Specs` classes composed with `Specification.allOf`; sort sanitized via `common/web/SortWhitelist`. REST returns `PageResponse<T>`.
+- **N+1 discipline**: `@EntityGraph` (to-one only) on paginated `findAll`; `ReservaService.findDetalle` hydrates collections with 3 constant fetch queries (`findByIdConHabitaciones/ConServicios/ConPagosYFactura` — same persistence context merges them). Collection counts use aggregate queries, only in detail views.
+- **Business codes**: `RES-yyyy-nnnnnn`/`FAC-yyyy-nnnnnn` come from PostgreSQL sequences (`nextCodigoSeq()`/`nextNumeroSeq()`) — never `count()+1`.
+- **Concurrency**: room availability and payment balance are validated under `PESSIMISTIC_WRITE` locks (`findAllByIdForUpdate`, `findByIdForUpdate`); `@Version` on Reserva/Pago/Factura/Habitacion.
+- **State machine** (`ReservaService.validarTransicionEstado`): PENDIENTE→CONFIRMADA→CHECKIN→CHECKOUT; CANCELADA from PENDIENTE/CONFIRMADA; NO_SHOW from CHECKIN. CHECKIN sets rooms OCUPADA; leaving CHECKIN frees them. Invalid transitions → `BusinessException` (422).
+- **Factura state is derived**: `FacturaService.recalcularEstadoPorReserva` runs after every payment change (PENDIENTE/PAGADA_PARCIALMENTE/PAGADA). Payment limit = factura total (with IVA) if one exists, else reserva price. Descuento may not exceed subtotal.
+- **Errors**: services throw `common/exception` types; `ApiExceptionHandler` (@Order(1), RFC 7807 ProblemDetail) covers REST; `MvcExceptionHandler` (@Order(2)) turns business errors into flash+redirect for views. 404→`ResourceNotFoundException`, 400→`BadRequestException`, 422→`BusinessException`, 409→integrity/optimistic-lock.
+- **Auditing**: entities extend `AuditableEntity` (creadoEn/actualizadoEn/creadoPor/actualizadoPor via Spring Data auditing reading the SecurityContext). Business events publish `ActividadEvent` → persisted to `activity_log` AFTER_COMMIT only.
+- **Security**: `security/SecurityConfig` — form login + sessions + remember-me for UI (CSRF on), HTTP Basic + 401 entry point + CSRF-exempt for `/api/**`. Roles are the `Rol` enum (ADMIN, RECEPCIONISTA). Route rules gate `/usuarios`, `/actividad`, `/empleados` and catalog writes; `@PreAuthorize("hasRole('ADMIN')")` guards `AbstractCrudService.softDelete` and `FacturaService.anular` as defense in depth. Deletes are soft (`activo` flag / estado CANCELADA/ANULADA).
 
-The Thymeleaf UI renders every entity through just two templates, `pages/list.html` and `pages/form.html`:
+### Frontend
 
-1. Each `DTO.Response` (DTOs are nested `Request`/`Response` static classes) has a `toMap()` returning a `LinkedHashMap` with Spanish keys in stable order — these keys are what views reference.
-2. Every service implements `IViewMapService<R>` (`findAllAsMap()` / `findByIdAsMap()`), delegating to the existing `findAll()`/`findById()` and calling `toMap()`.
-3. ViewControllers declare table columns and form fields using the static helpers in `controller/view/ViewSupport.java` (`column`, `field`, `select`, `multiselect`, `option`) and always return `pages/list` or `pages/form`. Form field `type` values supported by `fragments/form.html`: text, email, number, date, password, textarea, select, multiselect, checkbox.
+Thymeleaf, layout-dialect. `layout/app.html` = sidebar+topbar admin shell (nav highlighting uses `currentPath` from `GlobalViewAttributes`); `layout/auth.html` = auth/error card. Per-entity templates (`{modulo}/{lista,form,detalle}.html`) built on typed fragments:
+- `fragments/campos.html` — form fields bound with `th:field`/`th:errors` via preprocessing (`*{__${campo}__}`). **Use `th:insert` on the grid wrapper div** (`th:replace` would destroy the `col-md-*` class).
+- `fragments/tabla.html` — sortable headers + pagination that preserve the query string (`queryBase`/`queryBaseSort` model attrs).
+- `fragments/badges.html` (estado→color+Spanish label), `fragments/estados.html` (empty states).
+- Confirmations use the generic modal wired by `data-hp-confirm` on forms (see `static/js/app.js`); flash `success`/`error` render as toasts from `layout/app.html`.
+- All assets are local (`static/vendor/`, Inter font in `static/fonts/`) — do not add CDN references. Design tokens in `static/css/app.css` (`--hp-*`).
 
-When adding an entity, the full chain is: model → repository → DTO (Request/Response + `toMap()`) → service implementing `IViewMapService` → REST controller under `/api/...` → ViewController + navbar link.
+### Gotchas
 
-### Conventions and gotchas
-
-- **Mapping is manual**: each service has a public `toResponse(Entity)` method. MapStruct is configured in `pom.xml` but **unused** — no `@Mapper` interfaces exist; keep mapping manual for consistency.
-- **Error handling**: throw the exceptions in `exception/` from services; `GlobalExceptionHandler` maps them — `ResourceNotFoundException` → 404, `BadRequestException` → 400, `BusinessException` (business-rule violations) → 422, bean validation → 400.
-- **Reserva state machine**: PENDIENTE → CONFIRMADA → CHECKIN → CHECKOUT, with CANCELADA reachable from PENDIENTE/CONFIRMADA and NO_SHOW from CHECKIN. Enforced in `ReservaService.validarTransicionEstado()`; invalid transitions throw `BusinessException` (422).
-- **Deletes are soft**: entities have an `activo` flag (or, for reservations, state becomes CANCELADA); DELETE endpoints deactivate rather than remove rows.
-- **Prices are computed server-side** in `ReservaService` (rooms × nights + services); availability is checked per date range via `ReservaRepository.countReservasActivasParaHabitacion`.
-- Lombok is used throughout (`@RequiredArgsConstructor` for DI, `@Slf4j`, `@Builder` on entities/DTOs).
+- Don't index model Maps by enum objects in SpEL (`map[enumVal]` breaks); key label maps by `name()` strings.
+- Enum `@Column` needs explicit `length` matching the DDL CHECK columns.
+- Lombok `@Builder.Default` values don't apply outside builders; MapStruct mappers use `disableBuilder`, so defaults like `activo=true` are set via `@Mapping(constant=...)` in `toEntity`.
+- Never modify an applied Flyway migration (checksum); add a new `V<n>__*.sql`. Dev-only seeds go in `db/seed-dev/` numbered `V1000+` (never inside `db/migration` — recursive scan).
+- View controllers bind `@ModelAttribute("request")` DTOs; on `BindingResult` errors re-render the form with the same model attrs (title, editId, select data via `addFormData`).

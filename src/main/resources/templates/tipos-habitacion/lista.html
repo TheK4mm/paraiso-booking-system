@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Tipos de habitación</h1>
+            <p class="hp-page-sub">Categorías que determinan precio por noche y capacidad</p>
+        </div>
+        <a th:href="@{/tipos-habitacion/new}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo tipo
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/tipos-habitacion}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control" placeholder="Buscar por nombre…">
+        </div>
+        <div class="form-check" sec:authorize="hasRole('ADMIN')">
+            <input class="form-check-input" type="checkbox" name="incluirInactivos" value="true"
+                   id="incluirInactivos" th:checked="${incluirInactivos}" onchange="this.form.submit()">
+            <label class="form-check-label small" for="incluirInactivos">Incluir inactivos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/tipos-habitacion}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+        <a th:href="${'/tipos-habitacion/export.csv' + queryBase}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-columns-gap', 'Sin tipos de habitación',
+                          'Crea las categorías base para poder registrar habitaciones.',
+                          '/tipos-habitacion/new', 'Nuevo tipo')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'nombre', 'Nombre')}"></th>
+                    <th>Descripción</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'capacidadMaxima', 'Capacidad')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'precioBaseNoche', 'Precio/Noche')}"></th>
+                    <th>Estado</th>
+                    <th class="text-end" sec:authorize="hasRole('ADMIN')">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${page.content}">
+                    <td><a th:href="@{/tipos-habitacion/{id}/edit(id=${t.id})}" class="hp-row-link"
+                           th:text="${t.nombre}">Nombre</a></td>
+                    <td class="text-muted small" style="max-width: 340px;" th:text="${t.descripcion} ?: '—'">desc</td>
+                    <td><i class="bi bi-people me-1 text-muted"></i><span th:text="${t.capacidadMaxima}"></span></td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(t.precioBaseNoche, 0, 'POINT', 0, 'COMMA')} + ' COP'">precio</td>
+                    <td><span th:replace="~{fragments/badges :: activo(${t.activo})}"></span></td>
+                    <td class="text-end" sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/tipos-habitacion/{id}/edit(id=${t.id})}"
+                           class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <form th:action="@{/tipos-habitacion/{id}/delete(id=${t.id})}" method="post" class="d-inline"
+                              th:data-hp-confirm="|¿Desactivar el tipo ${t.nombre}?|" th:if="${t.activo}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

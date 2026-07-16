@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Facturas</h1>
+            <p class="hp-page-sub">Documentos de facturación con IVA y descuentos</p>
+        </div>
+        <a th:href="@{/facturas/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Generar factura
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/facturas}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control"
+                   placeholder="Número de factura o reserva…">
+        </div>
+        <select name="estado" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos los estados</option>
+            <option th:each="e : ${estados}" th:value="${e}" th:selected="${e == estado}"
+                    th:text="${e.name() == 'PENDIENTE'} ? 'Pendiente' :
+                             (${e.name() == 'PAGADA_PARCIALMENTE'} ? 'Pago parcial' :
+                             (${e.name() == 'PAGADA'} ? 'Pagada' : 'Anulada'))">Estado</option>
+        </select>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/facturas}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+        <a th:href="${'/facturas/export.csv' + queryBase}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-receipt', 'Sin facturas',
+                          'Genera la primera factura desde el detalle de una reserva confirmada.',
+                          '/facturas/new', 'Generar factura')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'numeroFactura', 'Número')}"></th>
+                    <th>Reserva</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'subtotal', 'Subtotal')}"></th>
+                    <th>Descuento</th>
+                    <th>IVA</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'total', 'Total')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'fechaEmision', 'Emisión')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'estadoFactura', 'Estado')}"></th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${page.content}">
+                    <td><a th:href="@{/facturas/{id}(id=${f.id})}" class="hp-row-link"
+                           th:text="${f.numeroFactura}">FAC</a></td>
+                    <td><a th:href="@{/reservas/{id}(id=${f.reservaId})}" class="text-decoration-none small"
+                           th:text="${f.codigoReserva}">RES</a></td>
+                    <td th:text="${#numbers.formatDecimal(f.subtotal, 0, 'POINT', 0, 'COMMA')}">sub</td>
+                    <td class="text-muted" th:text="${f.descuento.signum() > 0} ? '-' + ${#numbers.formatDecimal(f.descuento, 0, 'POINT', 0, 'COMMA')} : '—'">desc</td>
+                    <td th:text="${#numbers.formatDecimal(f.impuestoValor, 0, 'POINT', 0, 'COMMA')}">iva</td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(f.total, 0, 'POINT', 0, 'COMMA')} + ' COP'">total</td>
+                    <td class="small" th:text="${#temporals.format(f.fechaEmision, 'dd MMM yyyy')}">fecha</td>
+                    <td><span th:replace="~{fragments/badges :: factura(${f.estadoFactura})}"></span></td>
+                    <td class="text-end">
+                        <a th:href="@{/facturas/{id}(id=${f.id})}" class="btn btn-sm btn-outline-secondary"
+                           title="Ver detalle"><i class="bi bi-eye"></i></a>
+                        <form th:action="@{/facturas/{id}/delete(id=${f.id})}" method="post" class="d-inline"
+                              th:if="${f.estadoFactura.name() != 'ANULADA'}"
+                              sec:authorize="hasRole('ADMIN')"
+                              th:data-hp-confirm="|¿Anular la factura ${f.numeroFactura}?|">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Anular">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/auth}">
+<head>
+    <title>Crear cuenta</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h1 class="h5 text-center mb-1">Crear cuenta</h1>
+    <p class="text-muted small text-center mb-4">Las cuentas nuevas ingresan como recepcionista</p>
+
+    <form th:action="@{/registro}" th:object="${registro}" method="post" novalidate>
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
+            <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+        </div>
+
+        <div th:insert="~{fragments/campos :: input('username', 'Usuario', 'text', true)}"></div>
+        <div th:insert="~{fragments/campos :: input('nombreCompleto', 'Nombre completo', 'text', true)}"></div>
+        <div th:insert="~{fragments/campos :: input('email', 'Email', 'email', true)}"></div>
+        <div th:insert="~{fragments/campos :: input('password', 'Contraseña', 'password', true)}"></div>
+        <div th:insert="~{fragments/campos :: input('confirmarPassword', 'Confirmar contraseña', 'password', true)}"></div>
+
+        <button type="submit" class="btn btn-primary w-100">Registrarme</button>
+    </form>
+
+    <p class="text-center small text-muted mt-4 mb-0">
+        ¿Ya tienes cuenta? <a th:href="@{/login}" class="text-decoration-none">Iniciar sesión</a>
+    </p>
+</section>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/auth}">
+<head>
+    <title>Página no encontrada</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="text-center">
+        <div class="display-3 fw-bold text-primary">404</div>
+        <h1 class="h5 mt-2">Página no encontrada</h1>
+        <p class="text-muted small mb-4">El recurso que buscas no existe o fue movido.</p>
+        <a th:href="@{/}" class="btn btn-primary">
+            <i class="bi bi-house me-1"></i> Volver al inicio
+        </a>
+    </div>
+</section>
+</body>
+</html>

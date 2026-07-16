@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/reservas}">Reservas</a></li>
+            <li class="breadcrumb-item active" th:text="${r.codigoReserva}">RES</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="hp-page-title mb-0" th:text="${r.codigoReserva}">RES-2026-000001</h1>
+            <span th:replace="~{fragments/badges :: reserva(${r.estado})}"></span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Acciones contextuales según la máquina de estados -->
+            <form th:if="${r.estado.name() == 'PENDIENTE'}" th:action="@{/reservas/{id}/estado(id=${r.id})}" method="post">
+                <input type="hidden" name="estado" value="CONFIRMADA">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i> Confirmar
+                </button>
+            </form>
+            <form th:if="${r.estado.name() == 'CONFIRMADA'}" th:action="@{/reservas/{id}/estado(id=${r.id})}" method="post">
+                <input type="hidden" name="estado" value="CHECKIN">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Check-in
+                </button>
+            </form>
+            <form th:if="${r.estado.name() == 'CHECKIN'}" th:action="@{/reservas/{id}/estado(id=${r.id})}" method="post">
+                <input type="hidden" name="estado" value="CHECKOUT">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-box-arrow-right me-1"></i> Check-out
+                </button>
+            </form>
+            <form th:if="${r.estado.name() == 'CHECKIN'}" th:action="@{/reservas/{id}/estado(id=${r.id})}" method="post"
+                  data-hp-confirm="¿Marcar la reserva como no-show?">
+                <input type="hidden" name="estado" value="NO_SHOW">
+                <button type="submit" class="btn btn-outline-secondary">No-show</button>
+            </form>
+            <a th:if="${r.estado.name() == 'PENDIENTE' or r.estado.name() == 'CONFIRMADA' or r.estado.name() == 'CHECKIN'}"
+               th:href="@{/reservas/{id}/edit(id=${r.id})}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i> Editar
+            </a>
+            <form th:if="${r.estado.name() == 'PENDIENTE' or r.estado.name() == 'CONFIRMADA'}"
+                  th:action="@{/reservas/{id}/delete(id=${r.id})}" method="post"
+                  th:data-hp-confirm="|¿Cancelar la reserva ${r.codigoReserva}?|">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Timeline de estados -->
+    <div class="card mb-3" th:if="${r.estado.name() != 'CANCELADA' and r.estado.name() != 'NO_SHOW'}">
+        <div class="card-body py-3">
+            <div class="hp-timeline"
+                 th:with="orden=${r.estado.name() == 'PENDIENTE' ? 0 : (r.estado.name() == 'CONFIRMADA' ? 1 : (r.estado.name() == 'CHECKIN' ? 2 : 3))}">
+                <div class="hp-step" th:classappend="${orden > 0} ? 'done' : 'current'">
+                    <span class="dot"><i class="bi" th:classappend="${orden > 0} ? 'bi-check' : 'bi-hourglass'"></i></span> Pendiente
+                </div>
+                <span class="hp-step-sep"></span>
+                <div class="hp-step" th:classappend="${orden > 1} ? 'done' : (${orden == 1} ? 'current')">
+                    <span class="dot"><i class="bi" th:classappend="${orden > 1} ? 'bi-check' : 'bi-calendar-check'"></i></span> Confirmada
+                </div>
+                <span class="hp-step-sep"></span>
+                <div class="hp-step" th:classappend="${orden > 2} ? 'done' : (${orden == 2} ? 'current')">
+                    <span class="dot"><i class="bi" th:classappend="${orden > 2} ? 'bi-check' : 'bi-box-arrow-in-right'"></i></span> Check-in
+                </div>
+                <span class="hp-step-sep"></span>
+                <div class="hp-step" th:classappend="${orden == 3} ? 'done'">
+                    <span class="dot"><i class="bi" th:classappend="${orden == 3} ? 'bi-check' : 'bi-box-arrow-right'"></i></span> Check-out
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-danger" th:if="${r.estado.name() == 'CANCELADA'}">
+        <i class="bi bi-x-circle me-2"></i>Esta reserva fue <strong>cancelada</strong>.
+    </div>
+    <div class="alert alert-secondary" th:if="${r.estado.name() == 'NO_SHOW'}">
+        <i class="bi bi-person-x me-2"></i>El huésped <strong>no se presentó</strong> (no-show).
+    </div>
+
+    <div class="row g-3">
+        <!-- Estancia -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-calendar-range me-2"></i>Estancia</div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Entrada</dt>
+                        <dd class="col-7 fw-semibold" th:text="${#temporals.format(r.fechaEntrada, 'EEEE dd MMM yyyy')}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Salida</dt>
+                        <dd class="col-7 fw-semibold" th:text="${#temporals.format(r.fechaSalida, 'EEEE dd MMM yyyy')}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Noches</dt>
+                        <dd class="col-7" th:text="${r.totalNoches}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Huéspedes</dt>
+                        <dd class="col-7" th:text="${r.numeroHuespedes}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Creada</dt>
+                        <dd class="col-7" th:text="${#temporals.format(r.creadoEn, 'dd MMM yyyy HH:mm')}">—</dd>
+                        <dt class="col-5 text-muted fw-normal" th:if="${r.observaciones}">Notas</dt>
+                        <dd class="col-7" th:if="${r.observaciones}" th:text="${r.observaciones}">—</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-person me-2"></i>Titular</div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 text-muted fw-normal">Cliente</dt>
+                        <dd class="col-7 fw-semibold" th:text="${r.clienteNombreCompleto}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Documento</dt>
+                        <dd class="col-7" th:text="${r.clienteDocumento}">—</dd>
+                        <dt class="col-5 text-muted fw-normal">Gestionada por</dt>
+                        <dd class="col-7" th:text="${r.empleadoNombreCompleto} ?: '—'">—</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Importes -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-cash-stack me-2"></i>Importes</div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-6 text-muted fw-normal">Total reserva</dt>
+                        <dd class="col-6 fw-semibold text-end"
+                            th:text="${#numbers.formatDecimal(r.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                        <dt class="col-6 text-muted fw-normal" th:if="${r.factura != null}">Total facturado</dt>
+                        <dd class="col-6 text-end" th:if="${r.factura != null}"
+                            th:text="${#numbers.formatDecimal(r.factura.total, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                        <dt class="col-6 text-muted fw-normal">Pagado</dt>
+                        <dd class="col-6 text-end text-success fw-semibold"
+                            th:text="${#numbers.formatDecimal(r.totalPagado, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                        <dt class="col-6 text-muted fw-normal">Saldo pendiente</dt>
+                        <dd class="col-6 text-end fw-bold"
+                            th:classappend="${r.saldoPendiente.signum() > 0} ? 'text-danger' : 'text-success'"
+                            th:text="${#numbers.formatDecimal(r.saldoPendiente, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habitaciones y servicios -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-door-open me-2"></i>Habitaciones</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center small"
+                        th:each="h : ${r.habitaciones}">
+                        <div>
+                            <span class="fw-semibold" th:text="'Hab. ' + ${h.numero}">101</span>
+                            <span class="text-muted" th:text="'· ' + ${h.tipoHabitacionNombre}">tipo</span>
+                        </div>
+                        <span th:text="${#numbers.formatDecimal(h.precioBaseNoche, 0, 'POINT', 0, 'COMMA')} + ' COP/noche'">precio</span>
+                    </li>
+                </ul>
+                <div class="card-header border-top"><i class="bi bi-stars me-2"></i>Servicios</div>
+                <ul class="list-group list-group-flush" th:if="${!r.servicios.isEmpty()}">
+                    <li class="list-group-item d-flex justify-content-between align-items-center small"
+                        th:each="s : ${r.servicios}">
+                        <span th:text="${s.nombre}">Servicio</span>
+                        <span th:text="${#numbers.formatDecimal(s.precio, 0, 'POINT', 0, 'COMMA')} + ' COP'">precio</span>
+                    </li>
+                </ul>
+                <div class="card-body small text-muted" th:if="${r.servicios.isEmpty()}">Sin servicios adicionales.</div>
+            </div>
+        </div>
+
+        <!-- Pagos y factura -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-credit-card me-2"></i>Pagos</span>
+                    <a th:if="${r.saldoPendiente.signum() > 0 and r.estado.name() != 'CANCELADA'}"
+                       th:href="@{/pagos/new(reservaId=${r.id})}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Registrar pago
+                    </a>
+                </div>
+                <div class="table-responsive" th:if="${!r.pagos.isEmpty()}">
+                    <table class="table hp-table mb-0">
+                        <thead>
+                        <tr><th>Fecha</th><th>Método</th><th>Monto</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p : ${r.pagos}">
+                            <td class="small" th:text="${#temporals.format(p.fechaPago, 'dd MMM yyyy HH:mm')}">fecha</td>
+                            <td class="small"><span th:replace="~{fragments/badges :: metodoPago(${p.metodoPago})}"></span></td>
+                            <td class="fw-semibold" th:text="${#numbers.formatDecimal(p.monto, 0, 'POINT', 0, 'COMMA')}">monto</td>
+                            <td><span th:replace="~{fragments/badges :: pago(${p.estadoPago})}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-body small text-muted" th:if="${r.pagos.isEmpty()}">Aún no hay pagos registrados.</div>
+
+                <div class="card-header border-top d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-receipt me-2"></i>Factura</span>
+                    <a th:if="${r.factura == null and (r.estado.name() == 'CONFIRMADA' or r.estado.name() == 'CHECKIN' or r.estado.name() == 'CHECKOUT')}"
+                       th:href="@{/facturas/new(reservaId=${r.id})}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Generar factura
+                    </a>
+                </div>
+                <div class="card-body small" th:if="${r.factura != null}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a th:href="@{/facturas/{id}(id=${r.factura.id})}" class="hp-row-link"
+                               th:text="${r.factura.numeroFactura}">FAC</a>
+                            <div class="text-muted" th:text="${#temporals.format(r.factura.fechaEmision, 'dd MMM yyyy')}">fecha</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" th:text="${#numbers.formatDecimal(r.factura.total, 0, 'POINT', 0, 'COMMA')} + ' COP'">total</div>
+                            <span th:replace="~{fragments/badges :: factura(${r.factura.estadoFactura})}"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body small text-muted" th:if="${r.factura == null}">Sin factura emitida.</div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

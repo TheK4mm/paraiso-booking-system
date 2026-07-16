@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Empleados</h1>
+            <p class="hp-page-sub">Personal del hotel que gestiona la operación</p>
+        </div>
+        <a th:href="@{/empleados/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo empleado
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/empleados}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control"
+                   placeholder="Buscar por nombre, documento o cargo…">
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="incluirInactivos" value="true"
+                   id="incluirInactivos" th:checked="${incluirInactivos}" onchange="this.form.submit()">
+            <label class="form-check-label small" for="incluirInactivos">Incluir inactivos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/empleados}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+        <a th:href="${'/empleados/export.csv' + queryBase}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-person-badge', 'Sin empleados',
+                          'Registra al personal del hotel.', '/empleados/new', 'Nuevo empleado')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'nombre', 'Empleado')}"></th>
+                    <th>Documento</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'cargo', 'Cargo')}"></th>
+                    <th>Email corporativo</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'fechaContratacion', 'Contratación')}"></th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${page.content}">
+                    <td><a th:href="@{/empleados/{id}/edit(id=${e.id})}" class="hp-row-link"
+                           th:text="${e.nombreCompleto}">Nombre</a></td>
+                    <td th:text="${e.numeroDocumento}">doc</td>
+                    <td th:text="${e.cargo}">cargo</td>
+                    <td th:text="${e.emailCorporativo} ?: '—'">email</td>
+                    <td th:text="${#temporals.format(e.fechaContratacion, 'dd MMM yyyy')}">fecha</td>
+                    <td><span th:replace="~{fragments/badges :: activo(${e.activo})}"></span></td>
+                    <td class="text-end">
+                        <a th:href="@{/empleados/{id}/edit(id=${e.id})}"
+                           class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <form th:action="@{/empleados/{id}/delete(id=${e.id})}" method="post" class="d-inline"
+                              th:data-hp-confirm="|¿Desactivar a ${e.nombreCompleto}?|" th:if="${e.activo}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                <i class="bi bi-person-dash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

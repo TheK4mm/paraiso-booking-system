@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Dashboard</h1>
+            <p class="hp-page-sub" th:text="${#temporals.format(#temporals.createToday(), 'EEEE dd MMMM yyyy')}">hoy</p>
+        </div>
+        <a th:href="@{/reservas/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nueva reserva
+        </a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#eef2ff;color:#4338ca;"><i class="bi bi-percent"></i></div>
+                <div>
+                    <div class="hp-kpi-value" th:text="${d.porcentajeOcupacion} + '%'">0%</div>
+                    <div class="hp-kpi-label">Ocupación hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#ecfdf5;color:#047857;"><i class="bi bi-box-arrow-in-right"></i></div>
+                <div>
+                    <div class="hp-kpi-value" th:text="${d.llegadasHoy}">0</div>
+                    <div class="hp-kpi-label">Llegadas hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#fffbeb;color:#b45309;"><i class="bi bi-box-arrow-right"></i></div>
+                <div>
+                    <div class="hp-kpi-value" th:text="${d.salidasHoy}">0</div>
+                    <div class="hp-kpi-label">Salidas hoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#eff6ff;color:#1d4ed8;"><i class="bi bi-calendar-check"></i></div>
+                <div>
+                    <div class="hp-kpi-value" th:text="${d.reservasActivas}">0</div>
+                    <div class="hp-kpi-label">Reservas activas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#ecfdf5;color:#047857;"><i class="bi bi-cash-stack"></i></div>
+                <div>
+                    <div class="hp-kpi-value"
+                         th:text="'$' + ${#numbers.formatDecimal(d.ingresosMes, 0, 'POINT', 0, 'COMMA')}">$0</div>
+                    <div class="hp-kpi-label">Ingresos del mes</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card hp-kpi">
+                <div class="hp-kpi-icon" style="background:#fef2f2;color:#b91c1c;"><i class="bi bi-receipt"></i></div>
+                <div>
+                    <div class="hp-kpi-value" th:text="${d.facturasPendientes}">0</div>
+                    <div class="hp-kpi-label">Facturas por cobrar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header">Ingresos por mes (pagos aprobados)</div>
+                <div class="card-body"><canvas id="chartIngresos" height="110"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">Reservas por estado</div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <canvas id="chartEstados" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Reservas por mes (fecha de entrada)</div>
+                <div class="card-body"><canvas id="chartReservas" height="80"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        window.hpDashboard = {
+            meses: /*[[${d.meses}]]*/ [],
+            ingresos: /*[[${d.ingresosPorMes}]]*/ [],
+            reservas: /*[[${d.reservasPorMes}]]*/ [],
+            estados: /*[[${d.estadosReserva}]]*/ [],
+            porEstado: /*[[${d.reservasPorEstado}]]*/ []
+        };
+    </script>
+    <script th:src="@{/vendor/chartjs/chart.umd.min.js}"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+</th:block>
+</body>
+</html>
