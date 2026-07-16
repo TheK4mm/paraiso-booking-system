@@ -56,6 +56,20 @@ class SecurityFlowIT {
     }
 
     @Test
+    void elPortalPublicoEsAccesibleSinSesion() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+        mockMvc.perform(get("/reservar")).andExpect(status().isOk());
+        mockMvc.perform(get("/consulta-reserva")).andExpect(status().isOk());
+    }
+
+    @Test
+    void unPostPublicoSinTokenCsrfEsRechazado() throws Exception {
+        mockMvc.perform(post("/consulta-reserva")
+                        .param("codigo", "RES-2026-000001").param("email", "x@x.com"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(username = "recepcion", roles = "RECEPCIONISTA")
     void elRecepcionistaNoAccedeAAdministracion() throws Exception {
         mockMvc.perform(get("/usuarios")).andExpect(status().isForbidden());
@@ -93,5 +107,30 @@ class SecurityFlowIT {
         mockMvc.perform(get("/usuarios")).andExpect(status().isOk());
         mockMvc.perform(get("/actividad")).andExpect(status().isOk());
         mockMvc.perform(get("/dashboard")).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "cliente@example.com", roles = "CLIENTE")
+    void elClienteAccedeASuCuenta() throws Exception {
+        mockMvc.perform(get("/mi-cuenta")).andExpect(status().isOk());
+        mockMvc.perform(get("/mi-cuenta/reservas")).andExpect(status().isOk());
+        mockMvc.perform(get("/mi-cuenta/perfil")).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "recepcion", roles = "RECEPCIONISTA")
+    void elPersonalNoAccedeAlAreaDeClientes() throws Exception {
+        mockMvc.perform(get("/mi-cuenta")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "cliente@example.com", roles = "CLIENTE")
+    void elClienteNoAccedeAlBackOffice() throws Exception {
+        mockMvc.perform(get("/dashboard")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/reservas")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/clientes")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/facturas")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/clientes")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/reservas")).andExpect(status().isForbidden());
     }
 }

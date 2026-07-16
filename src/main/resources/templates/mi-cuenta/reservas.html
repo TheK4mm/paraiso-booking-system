@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Mis reservas</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div th:replace="~{mi-cuenta/nav :: menu('reservas')}"></div>
+            </div>
+            <div class="col-lg-9">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h1 class="hp-section-title mb-0">Mis reservas</h1>
+                    <a th:href="@{/reservar}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i>Nueva reserva
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(reservas)}" class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-calendar-x" style="font-size: 2rem; color: var(--hp-text-muted);"></i>
+                        <h2 class="h6 mt-3">Aún no tienes reservas</h2>
+                        <p class="text-muted">Tu próxima estadía está a un par de clics.</p>
+                        <a th:href="@{/reservar}" class="btn btn-outline-primary">Reservar ahora</a>
+                    </div>
+                </div>
+
+                <div class="card" th:unless="${#lists.isEmpty(reservas)}">
+                    <div class="table-responsive">
+                        <table class="table hp-table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Fechas</th>
+                                <th>Noches</th>
+                                <th>Estado</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${reservas}" class="hp-row-link"
+                                th:onclick="|window.location='@{/mi-cuenta/reservas/{c}(c=${r.codigoReserva})}'|">
+                                <td class="fw-semibold" th:text="${r.codigoReserva}">RES</td>
+                                <td class="small">
+                                    <span th:text="${#temporals.format(r.fechaEntrada, 'd MMM yyyy')}">—</span>
+                                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                                    <span th:text="${#temporals.format(r.fechaSalida, 'd MMM yyyy')}">—</span>
+                                </td>
+                                <td th:text="${r.totalNoches}">3</td>
+                                <td><span th:replace="~{fragments/badges :: reserva(${r.estado})}"></span></td>
+                                <td class="text-end"
+                                    th:text="${#numbers.formatDecimal(r.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

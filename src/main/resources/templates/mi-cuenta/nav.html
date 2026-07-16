@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Menú lateral del área del huésped. activo: resumen|reservas|perfil -->
+<div th:fragment="menu(activo)" class="card">
+    <div class="card-body p-2 hp-account-nav">
+        <a th:href="@{/mi-cuenta}" th:classappend="${activo == 'resumen'} ? 'activo'">
+            <i class="bi bi-house-door"></i> Resumen
+        </a>
+        <a th:href="@{/mi-cuenta/reservas}" th:classappend="${activo == 'reservas'} ? 'activo'">
+            <i class="bi bi-calendar-check"></i> Mis reservas
+        </a>
+        <a th:href="@{/mi-cuenta/perfil}" th:classappend="${activo == 'perfil'} ? 'activo'">
+            <i class="bi bi-person"></i> Mi perfil
+        </a>
+    </div>
+</div>
+</body>
+</html>

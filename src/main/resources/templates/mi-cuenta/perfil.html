@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Mi perfil</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div th:replace="~{mi-cuenta/nav :: menu('perfil')}"></div>
+            </div>
+            <div class="col-lg-9">
+                <h1 class="hp-section-title mb-3">Mi perfil</h1>
+
+                <div th:unless="${cliente}" class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Tu cuenta aún no tiene una ficha de huésped vinculada. Contacta a
+                    recepción para completar tus datos.
+                </div>
+
+                <div class="row g-3" th:if="${cliente}">
+                    <div class="col-md-7">
+                        <div class="card">
+                            <div class="card-body">
+                                <h2 class="h6 fw-bold mb-3">Datos personales</h2>
+                                <form th:action="@{/mi-cuenta/perfil}" th:object="${perfil}" method="post" novalidate>
+                                    <div class="row g-2">
+                                        <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
+                                        <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+                                    </div>
+                                    <div th:insert="~{fragments/campos :: input('telefono', 'Teléfono', 'tel', false)}"></div>
+                                    <div th:insert="~{fragments/campos :: input('direccion', 'Dirección', 'text', false)}"></div>
+                                    <div th:insert="~{fragments/campos :: input('pais', 'País', 'text', false)}"></div>
+                                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h2 class="h6 fw-bold mb-3">Datos de la cuenta</h2>
+                                <dl class="mb-0">
+                                    <div class="hp-summary-linea">
+                                        <dt>Email</dt>
+                                        <dd th:text="${cliente.email}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Documento</dt>
+                                        <dd th:text="|${cliente.tipoDocumento} ${cliente.numeroDocumento}|">—</dd>
+                                    </div>
+                                </dl>
+                                <p class="text-muted small mt-3 mb-0">
+                                    <i class="bi bi-lock me-1"></i>
+                                    El email y el documento identifican tu cuenta y tus reservas;
+                                    para corregirlos contacta a recepción.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h2 class="h6 fw-bold mb-2">Contraseña</h2>
+                                <p class="text-muted small mb-2">
+                                    ¿Quieres cambiarla? Usa la recuperación de contraseña.
+                                </p>
+                                <a th:href="@{/recuperar}" class="btn btn-outline-secondary btn-sm">
+                                    Restablecer contraseña
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
