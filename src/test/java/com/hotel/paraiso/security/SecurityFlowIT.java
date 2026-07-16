@@ -165,7 +165,7 @@ class SecurityFlowIT {
                         .param("tipoDocumento", "").param("numeroDocumento", "")
                         .param("email", "no-es-un-email").param("telefono", "")
                         .param("password", "corta").param("confirmarPassword", "distinta"))
-                .andExpect(status().isUnprocessableEntity())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(view().name("fragments/auth :: registroPane"));
     }
 

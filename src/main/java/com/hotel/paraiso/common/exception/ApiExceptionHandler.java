@@ -47,7 +47,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ProblemDetail handleBusiness(BusinessException ex, HttpServletRequest req) {
-        return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Regla de negocio violada", ex.getMessage(), req);
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Regla de negocio violada", ex.getMessage(), req);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -65,7 +65,7 @@ public class AuthViewController {
         }
         if (result.hasErrors()) {
             if (ajax) {
-                response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+                response.setStatus(HttpStatus.UNPROCESSABLE_CONTENT.value());
                 return "fragments/auth :: registroPane";
             }
             return "auth/registro";
