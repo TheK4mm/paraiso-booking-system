@@ -53,4 +53,31 @@ public interface HabitacionRepository extends BaseRepository<Habitacion> {
             @Param("fechaEntrada") LocalDate fechaEntrada,
             @Param("fechaSalida") LocalDate fechaSalida
     );
+
+    /**
+     * Habitaciones reservables para el flujo público: a diferencia de
+     * {@link #findHabitacionesDisponibles} NO filtra por el estado físico
+     * DISPONIBLE (una habitación ocupada hoy es reservable el mes próximo);
+     * excluye solo mantenimiento/bloqueo, inactivas y solapes de reservas.
+     * Es la misma regla que aplica ReservaService al confirmar bajo lock,
+     * así búsqueda y confirmación son consistentes.
+     */
+    @EntityGraph(attributePaths = "tipoHabitacion")
+    @Query("""
+            SELECT h FROM Habitacion h
+            WHERE h.activo = true
+              AND h.estado NOT IN ('MANTENIMIENTO', 'BLOQUEADA')
+              AND h.id NOT IN (
+                  SELECT hab.id FROM Reserva r
+                  JOIN r.habitaciones hab
+                  WHERE r.estado NOT IN ('CANCELADA', 'NO_SHOW', 'CHECKOUT')
+                    AND r.fechaEntrada < :fechaSalida
+                    AND r.fechaSalida > :fechaEntrada
+              )
+            ORDER BY h.tipoHabitacion.precioBaseNoche, h.numero
+            """)
+    List<Habitacion> findHabitacionesReservables(
+            @Param("fechaEntrada") LocalDate fechaEntrada,
+            @Param("fechaSalida") LocalDate fechaSalida
+    );
 }

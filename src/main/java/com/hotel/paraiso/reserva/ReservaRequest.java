@@ -1,5 +1,6 @@
 package com.hotel.paraiso.reserva;
 
+import com.hotel.paraiso.common.validation.RangoFechas;
 import com.hotel.paraiso.common.validation.RangoFechasValido;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -17,7 +18,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @RangoFechasValido
-public class ReservaRequest {
+public class ReservaRequest implements RangoFechas {
 
     @NotNull(message = "La fecha de entrada es obligatoria")
     private LocalDate fechaEntrada;

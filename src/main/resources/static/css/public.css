@@ -1,0 +1,507 @@
+/* =====================================================================
+   Hotel Paraíso — Portal público (landing, reservas de huéspedes,
+   mi cuenta). Hereda los tokens --hp-* de app.css; este archivo solo
+   añade los componentes de la cara pública para no engordar el panel.
+   ===================================================================== */
+
+.hp-public-body {
+    background: var(--hp-bg);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.hp-public-main {
+    flex: 1 0 auto;
+}
+
+/* ─── Barra de navegación pública ──────────────────────────────────── */
+
+.hp-public-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--hp-border);
+    padding: .65rem 0;
+}
+
+.hp-public-brand {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--hp-text);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.hp-public-brand i {
+    color: var(--hp-primary);
+    margin-right: .3rem;
+}
+
+.hp-public-links {
+    gap: 1.4rem;
+    margin-left: 1rem;
+}
+
+.hp-public-links a {
+    color: var(--hp-text-muted);
+    text-decoration: none;
+    font-size: .925rem;
+    font-weight: 500;
+}
+
+.hp-public-links a:hover {
+    color: var(--hp-text);
+}
+
+.hp-nav-btn {
+    white-space: nowrap;
+}
+
+/* ─── Hero de la landing ───────────────────────────────────────────── */
+
+.hp-hero {
+    position: relative;
+    color: #fff;
+    padding: 6.5rem 0 7.5rem;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+
+.hp-hero--foto {
+    background-image:
+        linear-gradient(180deg, rgba(17, 24, 39, .55) 0%, rgba(17, 24, 39, .35) 45%, rgba(17, 24, 39, .65) 100%),
+        var(--hp-hero-img, none);
+}
+
+.hp-hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+.hp-hero-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: .8rem;
+    font-weight: 600;
+    opacity: .85;
+}
+
+.hp-hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.12;
+    max-width: 15em;
+}
+
+.hp-hero-sub {
+    font-size: 1.08rem;
+    opacity: .9;
+    max-width: 38em;
+}
+
+/* ─── Barra de búsqueda de disponibilidad ──────────────────────────── */
+
+.hp-search-bar {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    box-shadow: 0 18px 45px -18px rgba(17, 24, 39, .35);
+    padding: 1.1rem 1.25rem;
+}
+
+.hp-search-bar .form-label {
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--hp-text-muted);
+    margin-bottom: .3rem;
+}
+
+.hp-hero .hp-search-bar {
+    margin-top: 2.25rem;
+}
+
+/* ─── Secciones de la landing ──────────────────────────────────────── */
+
+.hp-section {
+    padding: 4.25rem 0;
+}
+
+.hp-section--alt {
+    background: var(--hp-surface);
+    border-top: 1px solid var(--hp-border);
+    border-bottom: 1px solid var(--hp-border);
+}
+
+.hp-section-eyebrow {
+    color: var(--hp-primary);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.hp-section-title {
+    font-weight: 800;
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    margin-bottom: .4rem;
+}
+
+.hp-section-sub {
+    color: var(--hp-text-muted);
+    max-width: 44em;
+}
+
+/* ─── Tarjetas de habitación (disponibilidad y landing) ────────────── */
+
+.hp-room-card {
+    background: var(--hp-surface);
+    border: 1px solid var(--hp-border);
+    border-radius: var(--hp-radius);
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+    height: 100%;
+}
+
+.hp-room-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 38px -16px rgba(17, 24, 39, .25);
+}
+
+.hp-room-img {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    object-fit: cover;
+    display: block;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 60%, #c7d2fe 100%);
+}
+
+.hp-room-img--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hp-primary);
+    font-size: 2.2rem;
+}
+
+.hp-room-body {
+    padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.hp-room-tipo {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: .1rem;
+}
+
+.hp-room-meta {
+    color: var(--hp-text-muted);
+    font-size: .85rem;
+}
+
+.hp-room-desc {
+    color: var(--hp-text-muted);
+    font-size: .9rem;
+    margin: .55rem 0 .35rem;
+}
+
+.hp-amenity-chip {
+    display: inline-block;
+    background: var(--hp-primary-soft);
+    color: var(--hp-primary);
+    border-radius: 999px;
+    padding: .18rem .6rem;
+    font-size: .74rem;
+    font-weight: 600;
+    margin: 0 .25rem .3rem 0;
+}
+
+.hp-price {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--hp-text);
+}
+
+.hp-price small {
+    font-weight: 500;
+    color: var(--hp-text-muted);
+}
+
+.hp-room-total {
+    background: var(--hp-bg);
+    border-top: 1px solid var(--hp-border);
+    padding: .8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+/* ─── Pasos del wizard de reserva ──────────────────────────────────── */
+
+.hp-wizard {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 4rem;
+}
+
+.hp-wizard--ancho {
+    max-width: 1140px;
+}
+
+.hp-wizard-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-bottom: 2.2rem;
+    flex-wrap: wrap;
+}
+
+.hp-step {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--hp-text-muted);
+    font-size: .85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hp-step-num {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    border: 2px solid var(--hp-border);
+    background: var(--hp-surface);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+}
+
+.hp-step.activo {
+    color: var(--hp-text);
+}
+
+.hp-step.activo .hp-step-num {
+    background: var(--hp-primary);
+    border-color: var(--hp-primary);
+    color: #fff;
+}
+
+.hp-step.hecho {
+    color: var(--hp-primary);
+}
+
+.hp-step.hecho .hp-step-num {
+    background: var(--hp-primary-soft);
+    border-color: var(--hp-primary);
+    color: var(--hp-primary);
+}
+
+.hp-step-sep {
+    width: 2.2rem;
+    height: 2px;
+    background: var(--hp-border);
+    margin: 0 .2rem;
+}
+
+/* ─── Resumen fijo de la reserva (paso de datos) ───────────────────── */
+
+.hp-booking-summary {
+    position: sticky;
+    top: 86px;
+}
+
+.hp-booking-summary .hp-room-img {
+    aspect-ratio: 21 / 9;
+    border-radius: calc(var(--hp-radius) - 2px) calc(var(--hp-radius) - 2px) 0 0;
+}
+
+.hp-summary-linea {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: .92rem;
+    padding: .3rem 0;
+}
+
+.hp-summary-linea dt {
+    color: var(--hp-text-muted);
+    font-weight: 500;
+}
+
+.hp-summary-linea dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: right;
+}
+
+.hp-summary-total {
+    border-top: 1px solid var(--hp-border);
+    margin-top: .5rem;
+    padding-top: .7rem;
+    font-size: 1.05rem;
+}
+
+/* ─── Código de confirmación (página de éxito) ─────────────────────── */
+
+.hp-codigo-reserva {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    color: var(--hp-primary);
+    background: var(--hp-primary-soft);
+    border-radius: var(--hp-radius);
+    padding: .8rem 1.4rem;
+    display: inline-block;
+}
+
+/* ─── Galería (landing) ────────────────────────────────────────────── */
+
+.hp-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .9rem;
+}
+
+.hp-gallery-grid img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--hp-radius);
+}
+
+/* ─── Navegación lateral de "mi cuenta" ────────────────────────────── */
+
+.hp-account-nav {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+.hp-account-nav a {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .55rem .8rem;
+    border-radius: var(--hp-radius-sm);
+    color: var(--hp-text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: .93rem;
+}
+
+.hp-account-nav a:hover {
+    background: var(--hp-bg);
+    color: var(--hp-text);
+}
+
+.hp-account-nav a.activo {
+    background: var(--hp-primary-soft);
+    color: var(--hp-primary);
+    font-weight: 600;
+}
+
+/* ─── Footer público ───────────────────────────────────────────────── */
+
+.hp-footer-public {
+    background: var(--hp-sidebar);
+    color: var(--hp-sidebar-text);
+    padding: 3rem 0 1.2rem;
+    margin-top: auto;
+}
+
+.hp-footer-brand {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.hp-footer-brand i {
+    color: #a5b4fc;
+    margin-right: .3rem;
+}
+
+.hp-footer-title {
+    color: #fff;
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: .8rem;
+}
+
+.hp-footer-text {
+    font-size: .9rem;
+    line-height: 1.6;
+}
+
+.hp-footer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: .9rem;
+}
+
+.hp-footer-list li {
+    padding: .22rem 0;
+}
+
+.hp-footer-list i {
+    margin-right: .45rem;
+    color: #a5b4fc;
+}
+
+.hp-footer-list a {
+    color: var(--hp-sidebar-text);
+    text-decoration: none;
+}
+
+.hp-footer-list a:hover {
+    color: #fff;
+}
+
+.hp-footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    margin-top: 2.2rem;
+    padding-top: 1.1rem;
+    font-size: .82rem;
+    text-align: center;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 991.98px) {
+    .hp-hero {
+        padding: 4.5rem 0 5.5rem;
+    }
+
+    .hp-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hp-booking-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hp-step-etiqueta {
+        display: none;
+    }
+
+    .hp-step.activo .hp-step-etiqueta {
+        display: inline;
+    }
+
+    .hp-gallery-grid {
+        grid-template-columns: 1fr;
+    }
+}

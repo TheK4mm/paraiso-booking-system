@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Consultar reserva</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="hp-wizard">
+        <div class="text-center mb-4">
+            <h1 class="hp-section-title">Consulta tu reserva</h1>
+            <p class="hp-section-sub mx-auto">
+                Ingresa el código de reserva y el email con el que reservaste.
+            </p>
+        </div>
+
+        <div class="hp-search-bar mx-auto" style="max-width: 620px;">
+            <form th:action="@{/consulta-reserva}" method="post" novalidate>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="codigo" class="form-label">Código de reserva</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo"
+                               th:value="${codigo}" placeholder="RES-2026-000123" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               th:value="${email}" placeholder="tu@email.com" required>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${noEncontrada}" class="alert alert-warning mx-auto mt-4 py-2 small text-center"
+             style="max-width: 620px;">
+            <i class="bi bi-search me-1"></i><span th:text="${noEncontrada}">No encontrada</span>
+        </div>
+
+        <div th:if="${reserva}" class="card mx-auto mt-4" style="max-width: 620px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h6 fw-bold mb-0" th:text="${reserva.codigoReserva}">RES</h2>
+                    <span th:replace="~{fragments/badges :: reserva(${reserva.estado})}"></span>
+                </div>
+                <dl class="mb-0">
+                    <div class="hp-summary-linea">
+                        <dt>Titular</dt>
+                        <dd th:text="${reserva.clienteNombreCompleto}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Llegada</dt>
+                        <dd th:text="${#temporals.format(reserva.fechaEntrada, 'EEE d MMM yyyy')}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Salida</dt>
+                        <dd th:text="${#temporals.format(reserva.fechaSalida, 'EEE d MMM yyyy')}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Habitación(es)</dt>
+                        <dd>
+                            <th:block th:each="h, it : ${reserva.habitaciones}">
+                                <span th:text="|${h.numero} · ${h.tipoHabitacionNombre}|">—</span><br th:unless="${it.last}">
+                            </th:block>
+                        </dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Huéspedes</dt>
+                        <dd th:text="${reserva.numeroHuespedes}">2</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Total</dt>
+                        <dd th:text="${#numbers.formatDecimal(reserva.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </div>
+                    <div class="hp-summary-linea" th:if="${reserva.totalPagado != null and reserva.totalPagado.signum() > 0}">
+                        <dt>Pagado</dt>
+                        <dd th:text="${#numbers.formatDecimal(reserva.totalPagado, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </div>
+                    <div class="hp-summary-linea hp-summary-total" th:if="${reserva.saldoPendiente != null}">
+                        <dt class="fw-bold text-dark">Saldo pendiente</dt>
+                        <dd th:text="${#numbers.formatDecimal(reserva.saldoPendiente, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </div>
+                </dl>
+                <p class="text-muted small mt-3 mb-0">
+                    ¿Necesitas modificar o cancelar? Llámanos al +57 (601) 555 01 23 o
+                    <a th:href="@{/registro}">crea una cuenta</a> con este email para
+                    gestionar tus reservas en línea.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

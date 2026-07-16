@@ -32,4 +32,10 @@ public class TipoHabitacionRequest {
     @NotNull(message = "El precio base por noche es obligatorio")
     @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0")
     private BigDecimal precioBaseNoche;
+
+    @Size(max = 255, message = "La ruta de la imagen no puede superar 255 caracteres")
+    private String imagen;
+
+    @Size(max = 500, message = "Las comodidades no pueden superar 500 caracteres")
+    private String comodidades;
 }

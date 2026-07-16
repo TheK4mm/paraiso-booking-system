@@ -15,6 +15,8 @@ public class TipoHabitacionResponse {
     private String descripcion;
     private Integer capacidadMaxima;
     private BigDecimal precioBaseNoche;
+    private String imagen;
+    private String comodidades;
     private Boolean activo;
     private LocalDateTime creadoEn;
 

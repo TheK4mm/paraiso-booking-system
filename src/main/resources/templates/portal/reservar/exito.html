@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Reserva creada</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="hp-wizard">
+        <div th:replace="~{fragments/wizard :: pasos(${paso})}"></div>
+
+        <div class="text-center">
+            <i class="bi bi-check-circle-fill" style="font-size: 3rem; color: var(--hp-success-fg, #16a34a);"></i>
+            <h1 class="hp-section-title mt-3">¡Tu reserva está creada!</h1>
+            <p class="text-muted">Guarda este código: con él y tu email puedes consultarla cuando quieras.</p>
+            <div class="hp-codigo-reserva" th:text="${reserva.codigoReserva}">RES-2026-000001</div>
+        </div>
+
+        <div class="card mx-auto mt-4" style="max-width: 560px;">
+            <div class="card-body">
+                <dl class="mb-0">
+                    <div class="hp-summary-linea">
+                        <dt>Estado</dt>
+                        <dd><span th:replace="~{fragments/badges :: reserva(${reserva.estado})}"></span></dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Titular</dt>
+                        <dd th:text="${reserva.clienteNombreCompleto}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Llegada</dt>
+                        <dd th:text="${#temporals.format(reserva.fechaEntrada, 'EEE d MMM yyyy')}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Salida</dt>
+                        <dd th:text="${#temporals.format(reserva.fechaSalida, 'EEE d MMM yyyy')}">—</dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Habitación</dt>
+                        <dd>
+                            <th:block th:each="h, it : ${reserva.habitaciones}">
+                                <span th:text="|${h.numero} · ${h.tipoHabitacionNombre}|">—</span><br th:unless="${it.last}">
+                            </th:block>
+                        </dd>
+                    </div>
+                    <div class="hp-summary-linea">
+                        <dt>Huéspedes</dt>
+                        <dd th:text="${reserva.numeroHuespedes}">2</dd>
+                    </div>
+                    <div class="hp-summary-linea hp-summary-total">
+                        <dt class="fw-bold text-dark" th:text="|Total (${reserva.totalNoches} noches)|">Total</dt>
+                        <dd th:text="${#numbers.formatDecimal(reserva.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="alert alert-info mx-auto mt-3 py-2 small" style="max-width: 560px;">
+            <i class="bi bi-info-circle me-1"></i>
+            Tu reserva quedó <strong>pendiente de confirmación</strong>: recepción la revisará
+            y quedará confirmada en breve. El pago se realiza directamente en el hotel.
+        </div>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <a th:href="@{/consulta-reserva}" class="btn btn-outline-primary">Consultar mi reserva</a>
+            <a th:href="@{/}" class="btn btn-outline-secondary">Volver al inicio</a>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -38,6 +38,14 @@ public class TipoHabitacion extends AuditableEntity implements Activable {
     @Column(name = "precio_base_noche", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioBaseNoche;
 
+    /** Ruta de la imagen pública (ej. /img/tipos/junior-suite.jpg); opcional. */
+    @Column(name = "imagen", length = 255)
+    private String imagen;
+
+    /** Comodidades separadas por coma (ej. "Wifi,TV,Minibar"); opcional. */
+    @Column(name = "comodidades", length = 500)
+    private String comodidades;
+
     @Column(name = "activo", nullable = false)
     @Builder.Default
     private Boolean activo = true;
