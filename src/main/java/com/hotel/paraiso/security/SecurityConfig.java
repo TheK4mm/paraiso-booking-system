@@ -16,12 +16,17 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
- * Configuración de seguridad:
- *  - Form login con sesiones para la interfaz web (CSRF activo).
+ * Configuración de seguridad en tres zonas:
+ *  - Pública: landing, flujo de reservas de huéspedes, consulta por
+ *    código y autenticación. Sin sesión requerida.
+ *  - Cliente: /mi-cuenta/** exclusivo del rol CLIENTE.
+ *  - Back-office: todo lo demás exige personal (ADMIN/RECEPCIONISTA) —
+ *    default cerrado: una ruta interna nueva queda protegida sin tocar
+ *    esta clase, y una pública nueva exige un permitAll consciente.
  *  - HTTP Basic para la API REST (/api/**), que responde 401 en JSON
  *    en lugar de redirigir al login; CSRF exento por ser API programática.
- *  - Autorización por rutas + method security (@PreAuthorize) como
- *    defensa en profundidad en los servicios.
+ *    La API es de back-office: CLIENTE recibe 403.
+ *  - Method security (@PreAuthorize) como defensa en profundidad.
  */
 @Configuration
 @EnableWebSecurity
@@ -37,17 +42,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http,
+                                    RolAuthenticationSuccessHandler successHandler) throws Exception {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
-                        // público: autenticación y estáticos
-                        .requestMatchers("/login", "/registro", "/recuperar", "/restablecer",
+                        // ── zona pública: landing, reservas de huéspedes, auth y estáticos ──
+                        .requestMatchers("/", "/reservar/**", "/consulta-reserva",
+                                "/login", "/registro", "/recuperar", "/restablecer",
+                                "/verificar-email/**",
                                 "/css/**", "/js/**", "/img/**", "/fonts/**", "/vendor/**", "/error").permitAll()
-                        // administración exclusiva
+                        // ── zona cliente ──
+                        .requestMatchers("/mi-cuenta/**").hasRole("CLIENTE")
+                        // ── administración exclusiva ──
                         .requestMatchers("/usuarios/**", "/actividad/**", "/empleados/**").hasRole("ADMIN")
                         .requestMatchers("/api/empleados/**").hasRole("ADMIN")
-                        // catálogos: escritura solo ADMIN (lectura para todos los autenticados)
+                        // catálogos: escritura solo ADMIN (lectura para el personal)
                         .requestMatchers(HttpMethod.POST,
                                 "/habitaciones/**", "/tipos-habitacion/**", "/servicios/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,
@@ -56,10 +66,11 @@ public class SecurityConfig {
                                 "/api/habitaciones/**", "/api/tipos-habitacion/**", "/api/servicios/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE,
                                 "/api/habitaciones/**", "/api/tipos-habitacion/**", "/api/servicios/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                        // ── todo lo demás es back-office: solo personal ──
+                        .anyRequest().hasAnyRole("ADMIN", "RECEPCIONISTA"))
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", false)
+                        .successHandler(successHandler)
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")

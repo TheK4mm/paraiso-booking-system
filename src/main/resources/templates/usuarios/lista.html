@@ -55,11 +55,17 @@
                     <td>
                         <span th:if="${u.rol.name() == 'ADMIN'}" class="hp-badge hp-badge-primary">Administrador</span>
                         <span th:if="${u.rol.name() == 'RECEPCIONISTA'}" class="hp-badge hp-badge-info">Recepcionista</span>
+                        <span th:if="${u.rol.name() == 'CLIENTE'}" class="hp-badge hp-badge-neutral">Cliente</span>
                     </td>
-                    <td><span th:replace="~{fragments/badges :: activo(${u.activo})}"></span></td>
+                    <td>
+                        <span th:replace="~{fragments/badges :: activo(${u.activo})}"></span>
+                        <span th:unless="${u.emailVerificado}" class="hp-badge hp-badge-warning ms-1"
+                              title="Aún no ha verificado su email">Sin verificar</span>
+                    </td>
                     <td class="small" th:text="${#temporals.format(u.creadoEn, 'dd MMM yyyy')}">fecha</td>
                     <td class="text-end">
-                        <form th:unless="${esYo}" th:action="@{/usuarios/{id}/rol(id=${u.id})}" method="post"
+                        <form th:unless="${esYo or u.rol.name() == 'CLIENTE'}"
+                              th:action="@{/usuarios/{id}/rol(id=${u.id})}" method="post"
                               class="d-inline"
                               th:data-hp-confirm="|¿Cambiar el rol de ${u.username}?|">
                             <input type="hidden" name="rol"

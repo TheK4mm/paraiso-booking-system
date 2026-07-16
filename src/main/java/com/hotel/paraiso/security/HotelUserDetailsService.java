@@ -17,13 +17,15 @@ public class HotelUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // El personal entra con su username; los clientes con su email
         Usuario usuario = usuarioRepository.findByUsernameIgnoreCase(username)
+                .or(() -> usuarioRepository.findByEmailIgnoreCase(username))
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
         return User.builder()
                 .username(usuario.getUsername())
                 .password(usuario.getPasswordHash())
                 .roles(usuario.getRol().name())
-                .disabled(!usuario.getActivo())
+                .disabled(!usuario.getActivo() || !usuario.getEmailVerificado())
                 .build();
     }
 }

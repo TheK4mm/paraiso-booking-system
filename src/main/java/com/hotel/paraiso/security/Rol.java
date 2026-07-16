@@ -6,5 +6,15 @@ package com.hotel.paraiso.security;
  */
 public enum Rol {
     ADMIN,
-    RECEPCIONISTA
+    RECEPCIONISTA,
+    CLIENTE;
+
+    /**
+     * Roles asignables desde la administración. Las cuentas CLIENTE nacen
+     * únicamente por el registro público (garantiza el vínculo con la
+     * ficha de cliente vía verificación de email).
+     */
+    public static Rol[] internos() {
+        return new Rol[] { ADMIN, RECEPCIONISTA };
+    }
 }

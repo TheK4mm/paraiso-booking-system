@@ -18,6 +18,10 @@ spring:
 
   flyway:
     locations: classpath:db/migration,classpath:db/seed-dev
+    # Los seeds dev van numerados V1000+; toda migración real nueva (V4, V5…)
+    # queda "fuera de orden" respecto a ellos en una BD dev ya poblada.
+    # En prod no existen los V1000+, así que el orden estricto se conserva.
+    out-of-order: true
 
   thymeleaf:
     cache: false

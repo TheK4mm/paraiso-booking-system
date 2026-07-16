@@ -24,7 +24,8 @@ public class UsuarioViewController {
 
     @ModelAttribute("roles")
     public Rol[] roles() {
-        return Rol.values();
+        // Solo roles internos: las cuentas CLIENTE nacen del registro público
+        return Rol.internos();
     }
 
     @GetMapping
