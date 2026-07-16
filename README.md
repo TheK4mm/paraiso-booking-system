@@ -13,6 +13,7 @@ Aplicación **full-stack profesional** para la operación de un hotel: **portal 
 - **Flujo de reservas sin registro** (`/reservar`): fechas → disponibilidad real (excluye solapes bajo la misma regla que el back-office) → tarjetas con foto/precio/total de estancia → datos del huésped → código de confirmación. El invitado queda registrado como cliente por su email (get-or-create, sin duplicados).
 - **Consulta de reserva por código + email** (`/consulta-reserva`), con mensaje único anti-enumeración.
 - **Rol `CLIENTE` con portal propio** (`/mi-cuenta`): resumen, historial, detalle con saldos, cancelación (solo PENDIENTE/CONFIRMADA) y edición de perfil. Los clientes inician sesión con su **email**.
+- **Login y registro en modal sobre el portal**: iniciar sesión o crear cuenta abre un modal (fondo desenfocado, login ⇄ registro sin salir) sobre la página actual — sin cambio de página; los errores y el éxito se muestran dentro del propio modal y, tras entrar, el visitante permanece donde estaba. Las páginas `/login` y `/registro` clásicas siguen existiendo como fallback (personal y navegación sin JS).
 - **Registro con verificación de email**: la cuenta no puede entrar y la ficha de cliente solo se crea/vincula tras abrir el enlace de un solo uso (24 h; por log al no haber SMTP). Nadie ve el historial de un email que no controla.
 - **Tres zonas de seguridad**: pública / cliente (`/mi-cuenta/**`) / back-office (todo lo demás, default-cerrado con `anyRequest().hasAnyRole("ADMIN","RECEPCIONISTA")`). La API `/api/**` es exclusiva del personal.
 
