@@ -7,21 +7,48 @@
 </head>
 <body>
 <section layout:fragment="content">
-    <h1 class="h5 text-center mb-1">Crear cuenta</h1>
-    <p class="text-muted small text-center mb-4">Las cuentas nuevas ingresan como recepcionista</p>
+    <h1 class="h5 text-center mb-1">Crea tu cuenta de huésped</h1>
+    <p class="text-muted small text-center mb-4">
+        Guarda tus datos, consulta tu historial y gestiona tus reservas
+    </p>
 
     <form th:action="@{/registro}" th:object="${registro}" method="post" novalidate>
         <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
             <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
         </div>
 
-        <div th:insert="~{fragments/campos :: input('username', 'Usuario', 'text', true)}"></div>
-        <div th:insert="~{fragments/campos :: input('nombreCompleto', 'Nombre completo', 'text', true)}"></div>
+        <div class="row g-2">
+            <div class="col-md-6" th:insert="~{fragments/campos :: input('nombre', 'Nombre', 'text', true)}"></div>
+            <div class="col-md-6" th:insert="~{fragments/campos :: input('apellido', 'Apellido', 'text', true)}"></div>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-md-5">
+                <div class="mb-3">
+                    <label for="tipoDocumento" class="form-label">Documento <span class="hp-required">*</span></label>
+                    <select class="form-select" id="tipoDocumento" th:field="*{tipoDocumento}"
+                            th:classappend="${#fields.hasErrors('tipoDocumento')} ? 'is-invalid'">
+                        <option value="">Tipo…</option>
+                        <option value="CC">Cédula de ciudadanía</option>
+                        <option value="CE">Cédula de extranjería</option>
+                        <option value="PASAPORTE">Pasaporte</option>
+                        <option value="NIT">NIT</option>
+                    </select>
+                    <div class="invalid-feedback" th:errors="*{tipoDocumento}"></div>
+                </div>
+            </div>
+            <div class="col-md-7" th:insert="~{fragments/campos :: input('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+        </div>
+
         <div th:insert="~{fragments/campos :: input('email', 'Email', 'email', true)}"></div>
+        <div th:insert="~{fragments/campos :: input('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
         <div th:insert="~{fragments/campos :: input('password', 'Contraseña', 'password', true)}"></div>
         <div th:insert="~{fragments/campos :: input('confirmarPassword', 'Confirmar contraseña', 'password', true)}"></div>
 
-        <button type="submit" class="btn btn-primary w-100">Registrarme</button>
+        <button type="submit" class="btn btn-primary w-100">Crear cuenta</button>
+        <p class="text-muted small text-center mt-3 mb-0">
+            Te enviaremos un enlace para verificar tu email antes del primer ingreso.
+        </p>
     </form>
 
     <p class="text-center small text-muted mt-4 mb-0">

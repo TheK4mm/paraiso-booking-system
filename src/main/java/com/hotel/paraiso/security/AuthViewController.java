@@ -1,6 +1,7 @@
 package com.hotel.paraiso.security;
 
 import com.hotel.paraiso.common.exception.BadRequestException;
+import com.hotel.paraiso.common.exception.BusinessException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -13,13 +14,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Login, registro público y recuperación de contraseña.
+ * Login, registro público de huéspedes (con verificación de email)
+ * y recuperación de contraseña.
  */
 @Controller
 @RequiredArgsConstructor
 public class AuthViewController {
 
-    private final UsuarioService usuarioService;
+    private final VerificacionEmailService verificacionEmailService;
     private final PasswordResetService passwordResetService;
 
     @GetMapping("/login")
@@ -27,14 +29,16 @@ public class AuthViewController {
         return "auth/login";
     }
 
+    // ─── Registro de huéspedes ───
+
     @GetMapping("/registro")
     public String registroForm(Model model) {
-        model.addAttribute("registro", new RegistroRequest());
+        model.addAttribute("registro", new RegistroClienteRequest());
         return "auth/registro";
     }
 
     @PostMapping("/registro")
-    public String registrar(@Valid @ModelAttribute("registro") RegistroRequest request,
+    public String registrar(@Valid @ModelAttribute("registro") RegistroClienteRequest request,
                             BindingResult result, RedirectAttributes redirect) {
         if (!result.hasErrors() && !request.getPassword().equals(request.getConfirmarPassword())) {
             result.rejectValue("confirmarPassword", "no-coincide", "Las contraseñas no coinciden");
@@ -43,13 +47,40 @@ public class AuthViewController {
             return "auth/registro";
         }
         try {
-            usuarioService.registrar(request);
+            verificacionEmailService.registrarCliente(request);
         } catch (BadRequestException e) {
             result.reject("registro-fallido", e.getMessage());
             return "auth/registro";
         }
-        redirect.addFlashAttribute("success", "Cuenta creada correctamente. Ya puedes iniciar sesión.");
+        redirect.addFlashAttribute("email", request.getEmail());
+        return "redirect:/verificar-email/pendiente";
+    }
+
+    /** Pantalla "revisa tu correo", con opción de reenviar el enlace. */
+    @GetMapping("/verificar-email/pendiente")
+    public String verificacionPendiente() {
+        return "auth/verificacion-pendiente";
+    }
+
+    @GetMapping("/verificar-email")
+    public String verificarEmail(@RequestParam String token, RedirectAttributes redirect) {
+        try {
+            verificacionEmailService.verificar(token);
+        } catch (BadRequestException | BusinessException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:/verificar-email/pendiente";
+        }
+        redirect.addFlashAttribute("success", "Email verificado. Ya puedes iniciar sesión.");
         return "redirect:/login";
+    }
+
+    @PostMapping("/verificar-email/reenviar")
+    public String reenviarVerificacion(@RequestParam String email, RedirectAttributes redirect) {
+        verificacionEmailService.reenviar(email);
+        redirect.addFlashAttribute("success",
+                "Si el email tiene una verificación pendiente, enviamos un nuevo enlace.");
+        redirect.addFlashAttribute("email", email);
+        return "redirect:/verificar-email/pendiente";
     }
 
     @GetMapping("/recuperar")

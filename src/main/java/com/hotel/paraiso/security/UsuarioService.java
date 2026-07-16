@@ -29,31 +29,8 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
 
-    /** Registro público: crea siempre RECEPCIONISTA (el rol lo eleva un ADMIN). */
-    @Transactional
-    public Usuario registrar(RegistroRequest request) {
-        if (!request.getPassword().equals(request.getConfirmarPassword())) {
-            throw new BadRequestException("Las contraseñas no coinciden");
-        }
-        if (usuarioRepository.existsByUsernameIgnoreCase(request.getUsername())) {
-            throw new BadRequestException("El nombre de usuario ya está en uso: " + request.getUsername());
-        }
-        if (usuarioRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new BadRequestException("El email ya está registrado: " + request.getEmail());
-        }
-        Usuario usuario = Usuario.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .nombreCompleto(request.getNombreCompleto())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .rol(Rol.RECEPCIONISTA)
-                .build();
-        Usuario guardado = usuarioRepository.save(usuario);
-        eventPublisher.publishEvent(new ActividadEvent(
-                "USUARIO_REGISTRADO", "Usuario", guardado.getId(), guardado.getUsername()));
-        log.info("Usuario registrado: {}", guardado.getUsername());
-        return guardado;
-    }
+    // El registro público vive en VerificacionEmailService (crea cuentas
+    // CLIENTE tras verificar el email); aquí solo queda la administración.
 
     // ─── Administración (solo ADMIN, protegido por ruta /usuarios/**) ──
 
@@ -73,6 +50,10 @@ public class UsuarioService {
 
     @Transactional
     public Usuario crearPorAdmin(UsuarioAdminRequest request) {
+        if (request.getRol() == Rol.CLIENTE) {
+            throw new BadRequestException(
+                    "Las cuentas de cliente se crean únicamente desde el registro público");
+        }
         if (usuarioRepository.existsByUsernameIgnoreCase(request.getUsername())) {
             throw new BadRequestException("El nombre de usuario ya está en uso: " + request.getUsername());
         }
@@ -112,6 +93,11 @@ public class UsuarioService {
         Usuario usuario = getOrThrow(id);
         if (usuario.getUsername().equalsIgnoreCase(usuarioActual)) {
             throw new BusinessException("No puedes cambiar el rol de tu propia cuenta");
+        }
+        if (nuevoRol == Rol.CLIENTE || usuario.getRol() == Rol.CLIENTE) {
+            // El vínculo con la ficha de cliente solo nace del registro público;
+            // convertir cuentas hacia/desde CLIENTE lo rompería
+            throw new BusinessException("El rol CLIENTE no puede asignarse ni retirarse desde la administración");
         }
         usuario.setRol(nuevoRol);
         usuarioRepository.save(usuario);

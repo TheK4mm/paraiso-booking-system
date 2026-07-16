@@ -1,0 +1,12 @@
+package com.hotel.paraiso.security;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface TokenVerificacionEmailRepository extends JpaRepository<TokenVerificacionEmail, Long> {
+
+    Optional<TokenVerificacionEmail> findByTokenHash(String tokenHash);
+
+    Optional<TokenVerificacionEmail> findTopByUsuarioOrderByCreadoEnDesc(Usuario usuario);
+}

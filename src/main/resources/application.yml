@@ -34,3 +34,8 @@ spring:
 
 server:
   port: 8080
+
+app:
+  # URL pública de la aplicación: se usa para construir los enlaces de
+  # verificación de email (y futuros correos transaccionales)
+  base-url: ${APP_BASE_URL:http://localhost:8080}
