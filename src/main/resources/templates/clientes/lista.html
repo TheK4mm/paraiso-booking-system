@@ -35,10 +35,11 @@
     </form>
 
     <div class="card">
-        <div th:if="${page.totalElements == 0}"
-             th:replace="~{fragments/estados :: vacio('bi-people', 'Sin clientes',
-                          ${q != null and !#strings.isEmpty(q)} ? 'Ningún cliente coincide con la búsqueda.' : 'Registra tu primer cliente para empezar a crear reservas.',
-                          '/clientes/new', 'Nuevo cliente')}"></div>
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/estados :: vacio('bi-people', 'Sin clientes',
+                              ${q != null and !#strings.isEmpty(q)} ? 'Ningún cliente coincide con la búsqueda.' : 'Registra tu primer cliente para empezar a crear reservas.',
+                              '/clientes/new', 'Nuevo cliente')}"></div>
+        </th:block>
 
         <div class="table-responsive" th:if="${page.totalElements > 0}">
             <table class="table hp-table align-middle">

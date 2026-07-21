@@ -31,9 +31,10 @@
     </form>
 
     <div class="card">
-        <div th:if="${page.totalElements == 0}"
-             th:replace="~{fragments/estados :: vacio('bi-clock-history', 'Sin actividad',
-                          'Aún no hay eventos registrados con estos filtros.', null, null)}"></div>
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/estados :: vacio('bi-clock-history', 'Sin actividad',
+                              'Aún no hay eventos registrados con estos filtros.', null, null)}"></div>
+        </th:block>
 
         <div class="table-responsive" th:if="${page.totalElements > 0}">
             <table class="table hp-table align-middle">
