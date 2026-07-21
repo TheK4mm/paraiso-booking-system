@@ -17,6 +17,14 @@ spring:
   thymeleaf:
     cache: true
 
+  # SMTP obligatorio en producción: sin MAIL_HOST los enlaces de
+  # verificación y restablecimiento solo se emitirían por el log
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
 app:
   security:
     remember-me-key: ${REMEMBER_ME_KEY}

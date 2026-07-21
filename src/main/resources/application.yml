@@ -32,6 +32,18 @@ spring:
       date-time: iso
       time: iso
 
+  # spring.mail.host se define SOLO donde hay SMTP real (application-prod).
+  # Deliberadamente sin valor por defecto: Boot registra JavaMailSender en
+  # cuanto la propiedad existe, aunque esté vacía, y el envío fallaría en
+  # silencio. Sin ella, EmailConfig cae en LogEmailSender.
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
 
@@ -39,3 +51,5 @@ app:
   # URL pública de la aplicación: se usa para construir los enlaces de
   # verificación de email (y futuros correos transaccionales)
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  email:
+    remitente: ${MAIL_FROM:no-reply@hotelparaiso.com}
