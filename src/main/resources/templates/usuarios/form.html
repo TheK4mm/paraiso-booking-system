@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/usuarios}">Usuarios</a></li>
+            <li class="breadcrumb-item active">Nuevo</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <h1 class="hp-page-title">Nuevo usuario</h1>
+    </div>
+
+    <div class="card" style="max-width: 720px;">
+        <div class="card-body p-4">
+            <form th:action="@{/usuarios}" th:object="${request}" method="post" novalidate>
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
+                    <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('username', 'Usuario', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombreCompleto', 'Nombre completo', 'text', true)}"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('password', 'Contraseña', 'password', true)}"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="rol" class="form-label">Rol <span class="hp-required">*</span></label>
+                    <select th:field="*{rol}" class="form-select"
+                            th:classappend="${#fields.hasErrors('rol')} ? 'is-invalid'">
+                        <option value="">— Seleccione —</option>
+                        <option th:each="r : ${roles}" th:value="${r}"
+                                th:text="${r.name() == 'ADMIN'} ? 'Administrador' : 'Recepcionista'">Rol</option>
+                    </select>
+                    <div class="invalid-feedback" th:errors="*{rol}">Error</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/usuarios}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Crear usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

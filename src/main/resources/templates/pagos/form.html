@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/pagos}">Pagos</a></li>
+            <li class="breadcrumb-item active" th:text="${editId != null} ? 'Editar' : 'Registrar'">Registrar</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <h1 class="hp-page-title" th:text="${editId != null} ? 'Editar pago' : 'Registrar pago'">Pago</h1>
+    </div>
+
+    <div class="card" style="max-width: 720px;">
+        <div class="card-body p-4">
+            <form th:action="${editId != null} ? @{/pagos/{id}(id=${editId})} : @{/pagos}"
+                  th:object="${request}" method="post" novalidate>
+                <div class="mb-3">
+                    <label for="reservaId" class="form-label">Reserva <span class="hp-required">*</span></label>
+                    <select th:field="*{reservaId}" class="form-select"
+                            th:classappend="${#fields.hasErrors('reservaId')} ? 'is-invalid'">
+                        <option value="">— Seleccione —</option>
+                        <option th:each="res : ${reservas}" th:value="${res.id}"
+                                th:text="|${res.codigoReserva} · ${res.clienteNombreCompleto} · ${#numbers.formatDecimal(res.precioTotal, 0, 'POINT', 0, 'COMMA')} COP|">Res</option>
+                    </select>
+                    <div class="invalid-feedback" th:errors="*{reservaId}">Error</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6" th:insert="~{fragments/campos :: numero('monto', 'Monto (COP)', true, '0.01')}"></div>
+                    <div class="col-md-6 mb-3">
+                        <label for="metodoPago" class="form-label">Método de pago <span class="hp-required">*</span></label>
+                        <select th:field="*{metodoPago}" class="form-select"
+                                th:classappend="${#fields.hasErrors('metodoPago')} ? 'is-invalid'">
+                            <option value="">— Seleccione —</option>
+                            <option th:each="m : ${metodos}" th:value="${m}" th:text="${metodoLabels[m.name()]}">Método</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{metodoPago}">Error</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="facturaId" class="form-label">Factura asociada (opcional)</label>
+                    <select th:field="*{facturaId}" class="form-select">
+                        <option value="">— Sin factura —</option>
+                        <option th:each="f : ${facturas}" th:value="${f.id}"
+                                th:text="|${f.numeroFactura} · ${f.codigoReserva}|">Factura</option>
+                    </select>
+                    <div class="form-text">Debe pertenecer a la misma reserva del pago.</div>
+                </div>
+                <div th:insert="~{fragments/campos :: entrada('referenciaTransaccion', 'Referencia de transacción', 'text', false)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/pagos}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${editId != null} ? 'Guardar cambios' : 'Registrar pago'">Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title text-capitalize" th:text="${nombreMes}">Mes</h1>
+            <p class="hp-page-sub">Ocupación por noche; clic en una reserva para ver su detalle</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/reservas/calendario(anio=${anterior.year}, mes=${anterior.monthValue})}"
+               class="btn btn-outline-secondary" aria-label="Mes anterior"><i class="bi bi-chevron-left"></i></a>
+            <a th:href="@{/reservas/calendario}" class="btn btn-outline-secondary">Hoy</a>
+            <a th:href="@{/reservas/calendario(anio=${siguiente.year}, mes=${siguiente.monthValue})}"
+               class="btn btn-outline-secondary" aria-label="Mes siguiente"><i class="bi bi-chevron-right"></i></a>
+        </div>
+    </div>
+
+    <div class="d-flex gap-3 mb-2 small text-muted flex-wrap">
+        <span><span class="hp-cal-chip PENDIENTE d-inline px-2">&nbsp;</span> Pendiente</span>
+        <span><span class="hp-cal-chip CONFIRMADA d-inline px-2">&nbsp;</span> Confirmada</span>
+        <span><span class="hp-cal-chip CHECKIN d-inline px-2">&nbsp;</span> Check-in</span>
+        <span><span class="hp-cal-chip CHECKOUT d-inline px-2">&nbsp;</span> Check-out</span>
+        <span class="ms-auto"><i class="bi bi-box-arrow-in-right"></i> llegada · <i class="bi bi-box-arrow-right"></i> última noche</span>
+    </div>
+
+    <div class="hp-cal">
+        <div class="hp-cal-head">Lun</div>
+        <div class="hp-cal-head">Mar</div>
+        <div class="hp-cal-head">Mié</div>
+        <div class="hp-cal-head">Jue</div>
+        <div class="hp-cal-head">Vie</div>
+        <div class="hp-cal-head">Sáb</div>
+        <div class="hp-cal-head">Dom</div>
+
+        <th:block th:each="semana : ${semanas}">
+            <div class="hp-cal-day" th:each="dia : ${semana}"
+                 th:classappend="${!dia.enMes ? 'fuera' : ''} + ${dia.hoy ? ' hoy' : ''}">
+                <div class="hp-cal-num" th:text="${dia.fecha.dayOfMonth}">1</div>
+                <a th:each="chip : ${dia.reservas}"
+                   th:href="@{/reservas/{id}(id=${chip.id})}"
+                   class="hp-cal-chip" th:classappend="${chip.estado}"
+                   th:title="|${chip.codigo} · ${chip.cliente}|">
+                    <i th:if="${chip.llegada}" class="bi bi-box-arrow-in-right"></i>
+                    <i th:if="${chip.ultimaNoche and !chip.llegada}" class="bi bi-box-arrow-right"></i>
+                    <span th:text="${chip.cliente}">Cliente</span>
+                </a>
+            </div>
+        </th:block>
+    </div>
+
+</section>
+</body>
+</html>

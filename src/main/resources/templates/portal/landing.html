@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Hotel Paraíso</title>
+</head>
+<body>
+<section layout:fragment="content">
+
+    <!-- ─── Hero + búsqueda ─────────────────────────────────────────── -->
+    <header class="hp-hero hp-hero--foto"
+            th:style="'--hp-hero-img: url(' + @{/img/hero-hotel.jpg} + ')'">
+        <div class="container">
+            <div class="hp-hero-eyebrow">Bogotá · Colombia</div>
+            <h1 class="hp-hero-title">Tu descanso empieza en el Hotel Paraíso</h1>
+            <p class="hp-hero-sub">
+                Habitaciones elegantes, atención cercana y la mejor ubicación de la
+                ciudad. Consulta la disponibilidad y reserva en menos de un minuto —
+                sin registros obligatorios ni pagos por adelantado.
+            </p>
+
+            <div class="hp-search-bar" style="max-width: 860px;">
+                <form th:action="@{/reservar/disponibilidad}" th:object="${busqueda}" method="get">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">Llegada</label>
+                            <input type="date" class="form-control" th:field="*{fechaEntrada}"
+                                   th:min="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Salida</label>
+                            <input type="date" class="form-control" th:field="*{fechaSalida}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Huéspedes</label>
+                            <input type="number" min="1" max="20" class="form-control" th:field="*{huespedes}">
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Buscar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- ─── Habitaciones ────────────────────────────────────────────── -->
+    <section class="hp-section" id="habitaciones">
+        <div class="container">
+            <div class="text-center mb-4">
+                <div class="hp-section-eyebrow">Habitaciones</div>
+                <h2 class="hp-section-title">Espacios pensados para descansar</h2>
+                <p class="hp-section-sub mx-auto">
+                    Desde habitaciones individuales hasta suites con jacuzzi: elige el
+                    espacio perfecto para tu estadía.
+                </p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-xl-4" th:each="t : ${tipos}">
+                    <div class="hp-room-card d-flex flex-column">
+                        <img th:if="${t.imagen}" th:src="@{${t.imagen}}" th:alt="${t.nombre}" class="hp-room-img">
+                        <div th:unless="${t.imagen}" class="hp-room-img hp-room-img--placeholder">
+                            <i class="bi bi-door-open"></i>
+                        </div>
+                        <div class="hp-room-body flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="hp-room-tipo" th:text="${t.nombre}">Tipo</div>
+                                <div class="hp-price text-end text-nowrap">
+                                    <small>desde</small>
+                                    <span th:text="${#numbers.formatDecimal(t.precioBaseNoche, 0, 'POINT', 0, 'COMMA')}">—</span>
+                                    <small>/noche</small>
+                                </div>
+                            </div>
+                            <div class="hp-room-meta mb-1">
+                                <i class="bi bi-people"></i> Hasta <span th:text="${t.capacidadMaxima}">2</span> huésped(es)
+                            </div>
+                            <p class="hp-room-desc" th:text="${t.descripcion}">Descripción</p>
+                            <div th:if="${t.comodidades}">
+                                <span class="hp-amenity-chip"
+                                      th:each="c : ${#strings.arraySplit(t.comodidades, ',')}"
+                                      th:text="${#strings.trim(c)}">Wifi</span>
+                            </div>
+                        </div>
+                        <div class="hp-room-total">
+                            <span class="text-muted small">Impuestos incluidos</span>
+                            <a th:href="@{/reservar}" class="btn btn-outline-primary btn-sm">Ver disponibilidad</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Servicios ───────────────────────────────────────────────── -->
+    <section class="hp-section hp-section--alt" id="servicios">
+        <div class="container">
+            <div class="text-center mb-4">
+                <div class="hp-section-eyebrow">Servicios</div>
+                <h2 class="hp-section-title">Todo lo que necesitas, sin salir del hotel</h2>
+            </div>
+            <div class="row g-4 text-center">
+                <div class="col-6 col-md-3">
+                    <i class="bi bi-wifi" style="font-size: 1.8rem; color: var(--hp-primary);"></i>
+                    <h3 class="h6 fw-bold mt-2 mb-1">Wifi de alta velocidad</h3>
+                    <p class="text-muted small mb-0">Gratis en todas las áreas del hotel.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <i class="bi bi-cup-hot" style="font-size: 1.8rem; color: var(--hp-primary);"></i>
+                    <h3 class="h6 fw-bold mt-2 mb-1">Restaurante y room service</h3>
+                    <p class="text-muted small mb-0">Cocina local e internacional, 24 horas.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <i class="bi bi-water" style="font-size: 1.8rem; color: var(--hp-primary);"></i>
+                    <h3 class="h6 fw-bold mt-2 mb-1">Piscina y spa</h3>
+                    <p class="text-muted small mb-0">Zona húmeda, masajes y bienestar.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <i class="bi bi-car-front" style="font-size: 1.8rem; color: var(--hp-primary);"></i>
+                    <h3 class="h6 fw-bold mt-2 mb-1">Transporte y parqueadero</h3>
+                    <p class="text-muted small mb-0">Traslados al aeropuerto y parqueo privado.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Galería ─────────────────────────────────────────────────── -->
+    <section class="hp-section" id="galeria">
+        <div class="container">
+            <div class="text-center mb-4">
+                <div class="hp-section-eyebrow">Galería</div>
+                <h2 class="hp-section-title">Un vistazo al Paraíso</h2>
+            </div>
+            <div class="hp-gallery-grid">
+                <img th:src="@{/img/galeria/lobby.jpg}" alt="Lobby del hotel" loading="lazy">
+                <img th:src="@{/img/galeria/piscina.jpg}" alt="Piscina" loading="lazy">
+                <img th:src="@{/img/galeria/restaurante.jpg}" alt="Restaurante" loading="lazy">
+                <img th:src="@{/img/galeria/spa.jpg}" alt="Spa" loading="lazy">
+                <img th:src="@{/img/galeria/terraza.jpg}" alt="Terraza" loading="lazy">
+                <img th:src="@{/img/galeria/habitacion-detalle.jpg}" alt="Detalle de habitación" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Testimonios ─────────────────────────────────────────────── -->
+    <section class="hp-section hp-section--alt" id="testimonios">
+        <div class="container">
+            <div class="text-center mb-4">
+                <div class="hp-section-eyebrow">Testimonios</div>
+                <h2 class="hp-section-title">Lo que dicen nuestros huéspedes</h2>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="mb-2" style="color: #f59e0b;">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p class="mb-3">"La Junior Suite superó lo que esperábamos: el jacuzzi,
+                                la vista a la piscina, todo impecable. Volvemos seguro."</p>
+                            <div class="fw-semibold">Carolina M.</div>
+                            <div class="text-muted small">Medellín · Junio 2026</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="mb-2" style="color: #f59e0b;">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                            </div>
+                            <p class="mb-3">"Reservé en línea en dos minutos, sin registrarme.
+                                Al llegar, todo estaba listo. Atención de 10."</p>
+                            <div class="fw-semibold">Jorge A.</div>
+                            <div class="text-muted small">Cali · Mayo 2026</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="mb-2" style="color: #f59e0b;">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                            </div>
+                            <p class="mb-3">"Perfecto para ir en familia: la habitación familiar es
+                                amplia y el desayuno del restaurante, delicioso."</p>
+                            <div class="fw-semibold">Familia Torres</div>
+                            <div class="text-muted small">Bucaramanga · Abril 2026</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Ubicación ───────────────────────────────────────────────── -->
+    <section class="hp-section" id="ubicacion">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <div class="hp-section-eyebrow">Ubicación</div>
+                    <h2 class="hp-section-title">En el corazón de la ciudad</h2>
+                    <p class="hp-section-sub">
+                        A pasos del centro financiero y de los principales puntos de
+                        interés: museos, gastronomía y vida nocturna a menos de 10
+                        minutos.
+                    </p>
+                    <ul class="list-unstyled text-muted">
+                        <li class="py-1"><i class="bi bi-geo-alt me-2" style="color: var(--hp-primary);"></i>Cra. 7 # 45-12, Bogotá, Colombia</li>
+                        <li class="py-1"><i class="bi bi-airplane me-2" style="color: var(--hp-primary);"></i>25 min del Aeropuerto El Dorado</li>
+                        <li class="py-1"><i class="bi bi-telephone me-2" style="color: var(--hp-primary);"></i>+57 (601) 555 01 23</li>
+                        <li class="py-1"><i class="bi bi-envelope me-2" style="color: var(--hp-primary);"></i>reservas@hotelparaiso.com</li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <img th:src="@{/img/galeria/terraza.jpg}" alt="Terraza del hotel"
+                         class="rounded w-100" style="aspect-ratio: 4/3; object-fit: cover;" loading="lazy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── CTA final ───────────────────────────────────────────────── -->
+    <section class="hp-hero" style="padding: 3.5rem 0;">
+        <div class="container text-center">
+            <h2 class="hp-hero-title mx-auto" style="font-size: clamp(1.5rem, 3vw, 2.2rem);">
+                ¿Listo para tu próxima escapada?
+            </h2>
+            <p class="hp-hero-sub mx-auto mt-2">Reserva en un minuto, sin registro ni pagos por adelantado.</p>
+            <a th:href="@{/reservar}" class="btn btn-light btn-lg mt-3 fw-semibold">
+                Reservar ahora <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </section>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Detalle de reserva</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div th:replace="~{mi-cuenta/nav :: menu('reservas')}"></div>
+            </div>
+            <div class="col-lg-9">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <a th:href="@{/mi-cuenta/reservas}" class="text-decoration-none small text-muted">
+                            <i class="bi bi-arrow-left me-1"></i>Mis reservas
+                        </a>
+                        <h1 class="hp-section-title mb-0" th:text="${r.codigoReserva}">RES</h1>
+                    </div>
+                    <span th:replace="~{fragments/badges :: reserva(${r.estado})}"></span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-7">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h2 class="h6 fw-bold mb-3">Estadía</h2>
+                                <dl class="mb-0">
+                                    <div class="hp-summary-linea">
+                                        <dt>Llegada</dt>
+                                        <dd th:text="${#temporals.format(r.fechaEntrada, 'EEEE d MMMM yyyy')}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Salida</dt>
+                                        <dd th:text="${#temporals.format(r.fechaSalida, 'EEEE d MMMM yyyy')}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Noches</dt>
+                                        <dd th:text="${r.totalNoches}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Huéspedes</dt>
+                                        <dd th:text="${r.numeroHuespedes}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Habitación(es)</dt>
+                                        <dd>
+                                            <th:block th:each="h, it : ${r.habitaciones}">
+                                                <span th:text="|${h.numero} · ${h.tipoHabitacionNombre}|">—</span>
+                                                <br th:unless="${it.last}">
+                                            </th:block>
+                                        </dd>
+                                    </div>
+                                    <div class="hp-summary-linea" th:unless="${#lists.isEmpty(r.servicios)}">
+                                        <dt>Servicios</dt>
+                                        <dd>
+                                            <th:block th:each="s, it : ${r.servicios}">
+                                                <span th:text="${s.nombre}">—</span><br th:unless="${it.last}">
+                                            </th:block>
+                                        </dd>
+                                    </div>
+                                    <div class="hp-summary-linea" th:if="${r.observaciones}">
+                                        <dt>Observaciones</dt>
+                                        <dd th:text="${r.observaciones}">—</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h2 class="h6 fw-bold mb-3">Pagos</h2>
+                                <dl class="mb-0">
+                                    <div class="hp-summary-linea">
+                                        <dt>Total</dt>
+                                        <dd th:text="${#numbers.formatDecimal(r.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea" th:if="${r.factura != null}">
+                                        <dt>Factura</dt>
+                                        <dd th:text="${r.factura.numeroFactura}">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea">
+                                        <dt>Pagado</dt>
+                                        <dd th:text="${#numbers.formatDecimal(r.totalPagado ?: 0, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                                    </div>
+                                    <div class="hp-summary-linea hp-summary-total">
+                                        <dt class="fw-bold text-dark">Saldo pendiente</dt>
+                                        <dd th:text="${#numbers.formatDecimal(r.saldoPendiente ?: 0, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                                    </div>
+                                </dl>
+                                <p class="text-muted small mt-auto pt-3 mb-0">
+                                    Los pagos se realizan en el hotel o coordinando con recepción.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3"
+                     th:if="${r.estado.name() == 'PENDIENTE' or r.estado.name() == 'CONFIRMADA'}">
+                    <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="text-muted small">
+                            ¿Cambio de planes? Puedes cancelar sin costo mientras la reserva
+                            esté pendiente o confirmada.
+                        </div>
+                        <form th:action="@{/mi-cuenta/reservas/{c}/cancelar(c=${r.codigoReserva})}"
+                              method="post"
+                              th:data-hp-confirm="|¿Cancelar la reserva ${r.codigoReserva}? Esta acción no se puede deshacer.|">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-x-circle me-1"></i>Cancelar reserva
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

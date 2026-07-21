@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/facturas}">Facturas</a></li>
+            <li class="breadcrumb-item active" th:text="${f.numeroFactura}">FAC</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="hp-page-title mb-0" th:text="${f.numeroFactura}">FAC-2026-000001</h1>
+            <span th:replace="~{fragments/badges :: factura(${f.estadoFactura})}"></span>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i> Imprimir
+            </button>
+            <a th:if="${f.estadoFactura.name() != 'ANULADA'}" th:href="@{/facturas/{id}/edit(id=${f.id})}"
+               class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i> Editar</a>
+            <form th:if="${f.estadoFactura.name() != 'ANULADA'}" th:action="@{/facturas/{id}/delete(id=${f.id})}"
+                  method="post" sec:authorize="hasRole('ADMIN')"
+                  th:data-hp-confirm="|¿Anular la factura ${f.numeroFactura}?|">
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Anular</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header">Detalle de facturación</div>
+                <div class="card-body">
+                    <dl class="row small mb-0">
+                        <dt class="col-6 text-muted fw-normal">Reserva</dt>
+                        <dd class="col-6 text-end">
+                            <a th:href="@{/reservas/{id}(id=${f.reservaId})}" class="hp-row-link"
+                               th:text="${f.codigoReserva}">RES</a>
+                        </dd>
+                        <dt class="col-6 text-muted fw-normal">Fecha de emisión</dt>
+                        <dd class="col-6 text-end" th:text="${#temporals.format(f.fechaEmision, 'dd MMMM yyyy HH:mm')}">—</dd>
+                        <dt class="col-6 text-muted fw-normal" th:if="${f.notas}">Notas</dt>
+                        <dd class="col-6 text-end" th:if="${f.notas}" th:text="${f.notas}">—</dd>
+                    </dl>
+                    <hr>
+                    <dl class="row mb-0">
+                        <dt class="col-6 text-muted fw-normal">Subtotal</dt>
+                        <dd class="col-6 text-end" th:text="${#numbers.formatDecimal(f.subtotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                        <dt class="col-6 text-muted fw-normal">Descuento</dt>
+                        <dd class="col-6 text-end text-danger"
+                            th:text="${f.descuento.signum() > 0} ? '-' + ${#numbers.formatDecimal(f.descuento, 0, 'POINT', 0, 'COMMA')} + ' COP' : '—'">—</dd>
+                        <dt class="col-6 text-muted fw-normal" th:text="|IVA (${#numbers.formatDecimal(f.impuestoPorcentaje, 0, 'POINT', 2, 'COMMA')} %)|">IVA</dt>
+                        <dd class="col-6 text-end" th:text="${#numbers.formatDecimal(f.impuestoValor, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                        <dt class="col-6 fs-5">Total</dt>
+                        <dd class="col-6 text-end fs-5 fw-bold"
+                            th:text="${#numbers.formatDecimal(f.total, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">Pagos de la reserva</div>
+                <div class="table-responsive" th:if="${!pagos.isEmpty()}">
+                    <table class="table hp-table mb-0">
+                        <thead><tr><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead>
+                        <tbody>
+                        <tr th:each="p : ${pagos}">
+                            <td class="small" th:text="${#temporals.format(p.fechaPago, 'dd MMM yyyy')}">fecha</td>
+                            <td th:text="${#numbers.formatDecimal(p.monto, 0, 'POINT', 0, 'COMMA')}">monto</td>
+                            <td><span th:replace="~{fragments/badges :: pago(${p.estadoPago})}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-body small text-muted" th:if="${pagos.isEmpty()}">Sin pagos registrados.</div>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

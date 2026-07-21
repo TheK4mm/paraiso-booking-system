@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Habitaciones disponibles</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="hp-wizard hp-wizard--ancho">
+        <div th:replace="~{fragments/wizard :: pasos(${paso})}"></div>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+            <div>
+                <h1 class="hp-section-title mb-1">Elige tu habitación</h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    <span th:text="${#temporals.format(busqueda.fechaEntrada, 'd MMM yyyy')}">llegada</span>
+                    <i class="bi bi-arrow-right mx-1"></i>
+                    <span th:text="${#temporals.format(busqueda.fechaSalida, 'd MMM yyyy')}">salida</span>
+                    · <span th:text="|${busqueda.noches()} noche(s)|">noches</span>
+                    · <i class="bi bi-people ms-1 me-1"></i><span th:text="|${busqueda.huespedes} huésped(es)|">x</span>
+                </p>
+            </div>
+            <a th:href="@{/reservar(fechaEntrada=${busqueda.fechaEntrada}, fechaSalida=${busqueda.fechaSalida}, huespedes=${busqueda.huespedes})}"
+               class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil me-1"></i>Cambiar fechas
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(habitaciones)}" class="text-center py-5">
+            <i class="bi bi-moon-stars" style="font-size: 2.5rem; color: var(--hp-text-muted);"></i>
+            <h2 class="h5 mt-3">No hay habitaciones disponibles para esas fechas</h2>
+            <p class="text-muted">Prueba con otras fechas o con menos huéspedes por habitación.</p>
+            <a th:href="@{/reservar(fechaEntrada=${busqueda.fechaEntrada}, fechaSalida=${busqueda.fechaSalida}, huespedes=${busqueda.huespedes})}"
+               class="btn btn-primary">Cambiar la búsqueda</a>
+        </div>
+
+        <div class="row g-4" th:unless="${#lists.isEmpty(habitaciones)}">
+            <div class="col-md-6 col-xl-4" th:each="h : ${habitaciones}">
+                <div class="hp-room-card d-flex flex-column">
+                    <img th:if="${h.imagen}" th:src="@{${h.imagen}}" th:alt="${h.tipoNombre}" class="hp-room-img">
+                    <div th:unless="${h.imagen}" class="hp-room-img hp-room-img--placeholder">
+                        <i class="bi bi-door-open"></i>
+                    </div>
+                    <div class="hp-room-body flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <div class="hp-room-tipo" th:text="${h.tipoNombre}">Tipo</div>
+                                <div class="hp-room-meta">
+                                    Hab. <span th:text="${h.numero}">101</span> · Piso <span th:text="${h.piso}">1</span>
+                                    · <i class="bi bi-people"></i> hasta <span th:text="${h.capacidad}">2</span>
+                                </div>
+                            </div>
+                            <div class="hp-price text-end text-nowrap">
+                                <span th:text="${#numbers.formatDecimal(h.precioNoche, 0, 'POINT', 0, 'COMMA')}">150.000</span>
+                                <small>/noche</small>
+                            </div>
+                        </div>
+                        <p class="hp-room-desc" th:text="${h.descripcion} ?: ${h.tipoDescripcion}">Descripción</p>
+                        <div th:unless="${#lists.isEmpty(h.comodidades)}">
+                            <span class="hp-amenity-chip" th:each="c : ${h.comodidades}" th:text="${c}">Wifi</span>
+                        </div>
+                    </div>
+                    <div class="hp-room-total">
+                        <div>
+                            <div class="text-muted small" th:text="|Total por ${busqueda.noches()} noche(s)|">total</div>
+                            <div class="hp-price"
+                                 th:text="${#numbers.formatDecimal(h.totalEstancia, 0, 'POINT', 0, 'COMMA')} + ' COP'">COP</div>
+                        </div>
+                        <form th:action="@{/reservar/seleccion}" method="post" class="m-0">
+                            <input type="hidden" name="habitacionId" th:value="${h.habitacionId}">
+                            <input type="hidden" name="fechaEntrada" th:value="${busqueda.fechaEntrada}">
+                            <input type="hidden" name="fechaSalida" th:value="${busqueda.fechaSalida}">
+                            <input type="hidden" name="huespedes" th:value="${busqueda.huespedes}">
+                            <button type="submit" class="btn btn-primary">Reservar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

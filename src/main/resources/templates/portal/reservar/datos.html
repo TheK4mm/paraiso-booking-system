@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Tus datos</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="hp-wizard hp-wizard--ancho">
+        <div th:replace="~{fragments/wizard :: pasos(${paso})}"></div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <h1 class="hp-section-title mb-3">Completa tu reserva</h1>
+
+                <!-- Opciones para el visitante anónimo -->
+                <div th:if="${anonimo}" class="card mb-4">
+                    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold mb-1"><i class="bi bi-person me-1"></i>¿Tienes cuenta?</div>
+                            <div class="text-muted small">
+                                Inicia sesión para reservar con tus datos guardados, o continúa
+                                como invitado sin registrarte. Tu selección se conserva.
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/login}" data-hp-auth="login" class="btn btn-outline-primary btn-sm">Iniciar sesión</a>
+                            <a th:href="@{/registro}" data-hp-auth="registro" class="btn btn-outline-secondary btn-sm">Crear cuenta</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${clienteAutenticado}" class="alert alert-info py-2 small">
+                    <i class="bi bi-person-check me-1"></i>
+                    Reservando con los datos de tu cuenta. Puedes actualizar tu perfil en
+                    <a th:href="@{/mi-cuenta/perfil}" class="alert-link">Mi cuenta</a>.
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="@{/reservar/confirmar}" th:object="${datos}" method="post" novalidate>
+                            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
+                                <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+                            </div>
+
+                            <!-- Cliente autenticado: identidad fija (manda su ficha en el servidor) -->
+                            <th:block th:if="${clienteAutenticado}">
+                                <input type="hidden" th:field="*{nombre}">
+                                <input type="hidden" th:field="*{apellido}">
+                                <input type="hidden" th:field="*{tipoDocumento}">
+                                <input type="hidden" th:field="*{numeroDocumento}">
+                                <input type="hidden" th:field="*{email}">
+                                <input type="hidden" th:field="*{telefono}">
+                                <dl class="row mb-1 small">
+                                    <dt class="col-sm-4 text-muted fw-normal">Titular</dt>
+                                    <dd class="col-sm-8 fw-semibold" th:text="|*{nombre} *{apellido}|">—</dd>
+                                    <dt class="col-sm-4 text-muted fw-normal">Documento</dt>
+                                    <dd class="col-sm-8" th:text="|*{tipoDocumento} *{numeroDocumento}|">—</dd>
+                                    <dt class="col-sm-4 text-muted fw-normal">Email</dt>
+                                    <dd class="col-sm-8" th:text="*{email}">—</dd>
+                                </dl>
+                            </th:block>
+
+                            <!-- Invitado: formulario completo -->
+                            <th:block th:unless="${clienteAutenticado}">
+                                <div class="row g-2">
+                                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('apellido', 'Apellido', 'text', true)}"></div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <div class="mb-3">
+                                            <label for="tipoDocumento" class="form-label">Documento <span class="hp-required">*</span></label>
+                                            <select class="form-select" th:field="*{tipoDocumento}"
+                                                    th:classappend="${#fields.hasErrors('tipoDocumento')} ? 'is-invalid'">
+                                                <option value="">Tipo…</option>
+                                                <option value="CC">Cédula de ciudadanía</option>
+                                                <option value="CE">Cédula de extranjería</option>
+                                                <option value="PASAPORTE">Pasaporte</option>
+                                                <option value="NIT">NIT</option>
+                                            </select>
+                                            <div class="invalid-feedback" th:errors="*{tipoDocumento}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7" th:insert="~{fragments/campos :: entrada('numeroDocumento', 'Número de documento', 'text', true)}"></div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-7" th:insert="~{fragments/campos :: entrada('email', 'Email', 'email', true)}"></div>
+                                    <div class="col-md-5" th:insert="~{fragments/campos :: entrada('telefono', 'Teléfono (opcional)', 'tel', false)}"></div>
+                                </div>
+                                <p class="text-muted small">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Usaremos tu email para asociar la reserva: podrás consultarla en
+                                    cualquier momento con el código y tu email.
+                                </p>
+                            </th:block>
+
+                            <div th:insert="~{fragments/campos :: areaTexto('observaciones', 'Observaciones (opcional)', false)}"></div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
+                                <i class="bi bi-check2-circle me-1"></i>Confirmar reserva
+                            </button>
+                            <p class="text-muted small text-center mt-2 mb-0">
+                                Sin pagos por adelantado: pagas al llegar al hotel.
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="hp-booking-summary card overflow-hidden">
+                    <img th:if="${enCurso.imagen()}" th:src="@{${enCurso.imagen()}}" alt="" class="hp-room-img">
+                    <div th:unless="${enCurso.imagen()}" class="hp-room-img hp-room-img--placeholder">
+                        <i class="bi bi-door-open"></i>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="h6 fw-bold mb-1" th:text="${enCurso.tipoNombre()}">Tipo</h2>
+                        <div class="text-muted small mb-3" th:text="|Habitación ${enCurso.numero()}|">Hab</div>
+                        <dl class="mb-0">
+                            <div class="hp-summary-linea">
+                                <dt>Llegada</dt>
+                                <dd th:text="${#temporals.format(enCurso.fechaEntrada(), 'EEE d MMM yyyy')}">—</dd>
+                            </div>
+                            <div class="hp-summary-linea">
+                                <dt>Salida</dt>
+                                <dd th:text="${#temporals.format(enCurso.fechaSalida(), 'EEE d MMM yyyy')}">—</dd>
+                            </div>
+                            <div class="hp-summary-linea">
+                                <dt>Huéspedes</dt>
+                                <dd th:text="${enCurso.huespedes()}">2</dd>
+                            </div>
+                            <div class="hp-summary-linea">
+                                <dt th:text="|${enCurso.precioNoche() != null ? #numbers.formatDecimal(enCurso.precioNoche(), 0, 'POINT', 0, 'COMMA') : ''} COP × ${enCurso.noches()} noche(s)|">—</dt>
+                                <dd th:text="${#numbers.formatDecimal(enCurso.total(), 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                            </div>
+                            <div class="hp-summary-linea hp-summary-total">
+                                <dt class="fw-bold text-dark">Total estimado</dt>
+                                <dd th:text="${#numbers.formatDecimal(enCurso.total(), 0, 'POINT', 0, 'COMMA')} + ' COP'">—</dd>
+                            </div>
+                        </dl>
+                        <p class="text-muted small mt-2 mb-0">
+                            El total definitivo se confirma al crear la reserva.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

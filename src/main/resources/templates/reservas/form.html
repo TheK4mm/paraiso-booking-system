@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/reservas}">Reservas</a></li>
+            <li class="breadcrumb-item active" th:text="${editId != null} ? 'Editar' : 'Nueva'">Nueva</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <h1 class="hp-page-title" th:text="${editId != null} ? 'Editar reserva' : 'Nueva reserva'">Reserva</h1>
+    </div>
+
+    <div class="card" style="max-width: 960px;">
+        <div class="card-body p-4">
+            <form th:action="${editId != null} ? @{/reservas/{id}(id=${editId})} : @{/reservas}"
+                  th:object="${request}" method="post" novalidate>
+
+                <h6 class="text-muted text-uppercase small fw-semibold mb-3">Estancia</h6>
+                <div class="row">
+                    <div class="col-md-4" th:insert="~{fragments/campos :: entrada('fechaEntrada', 'Fecha de entrada', 'date', true)}"></div>
+                    <div class="col-md-4" th:insert="~{fragments/campos :: entrada('fechaSalida', 'Fecha de salida', 'date', true)}"></div>
+                    <div class="col-md-4" th:insert="~{fragments/campos :: numero('numeroHuespedes', 'Huéspedes', true, '1')}"></div>
+                </div>
+
+                <h6 class="text-muted text-uppercase small fw-semibold mb-3 mt-2">Titular</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="clienteId" class="form-label">Cliente <span class="hp-required">*</span></label>
+                        <select th:field="*{clienteId}" class="form-select"
+                                th:classappend="${#fields.hasErrors('clienteId')} ? 'is-invalid'">
+                            <option value="">— Seleccione —</option>
+                            <option th:each="c : ${clientes}" th:value="${c.id}"
+                                    th:text="|${c.nombreCompleto} (${c.numeroDocumento})|">Cliente</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{clienteId}">Error</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="empleadoId" class="form-label">Empleado que gestiona</label>
+                        <select th:field="*{empleadoId}" class="form-select">
+                            <option value="">— Sin asignar —</option>
+                            <option th:each="e : ${empleados}" th:value="${e.id}" th:text="${e.nombreCompleto}">Empleado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h6 class="text-muted text-uppercase small fw-semibold mb-3 mt-2">Habitaciones y servicios</h6>
+                <div class="row">
+                    <div class="col-md-6"
+                         th:with="opciones=${habitaciones}">
+                        <div class="mb-3">
+                            <label class="form-label">Habitaciones <span class="hp-required">*</span></label>
+                            <select th:field="*{habitacionIds}" class="form-select" multiple size="7"
+                                    th:classappend="${#fields.hasErrors('habitacionIds')} ? 'is-invalid'">
+                                <option th:each="h : ${habitaciones}" th:value="${h.id}"
+                                        th:text="|Hab. ${h.numero} · ${h.tipoHabitacionNombre} · ${#numbers.formatDecimal(h.precioBaseNoche, 0, 'POINT', 0, 'COMMA')} COP/noche|">Hab</option>
+                            </select>
+                            <div class="form-text">Ctrl+clic para seleccionar varias.</div>
+                            <div class="invalid-feedback" th:errors="*{habitacionIds}">Error</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Servicios adicionales</label>
+                            <select th:field="*{servicioIds}" class="form-select" multiple size="7">
+                                <option th:each="s : ${servicios}" th:value="${s.id}"
+                                        th:text="|${s.nombre} · ${#numbers.formatDecimal(s.precio, 0, 'POINT', 0, 'COMMA')} COP|">Serv</option>
+                            </select>
+                            <div class="form-text">Opcional. Se suman al total de la reserva.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:insert="~{fragments/campos :: areaTexto('observaciones', 'Observaciones', false)}"></div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="${editId != null} ? @{/reservas/{id}(id=${editId})} : @{/reservas}"
+                       class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${editId != null} ? 'Guardar cambios' : 'Crear reserva'">Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

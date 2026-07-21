@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Campos de formulario tipados sobre th:object. El nombre del campo se
+  inyecta por preprocesamiento (__${campo}__), lo que habilita th:field,
+  th:errors y la clase is-invalid sin duplicar marcado por entidad.
+
+  IMPORTANTE: nunca nombrar un fragment como una etiqueta HTML (input,
+  select, textarea...). El selector de fragmentos (~{... :: nombre}) es un
+  markup selector: además de th:fragment casa por NOMBRE DE ETIQUETA, y
+  arrastraría los <input>/<select> crudos de los demás fragments de este
+  archivo, duplicando campos en el formulario destino.
+-->
+
+<div th:fragment="entrada(campo, etiqueta, tipo, requerido)" class="mb-3">
+    <label th:for="${campo}" class="form-label">
+        <span th:text="${etiqueta}">Etiqueta</span>
+        <span th:if="${requerido}" class="hp-required">*</span>
+    </label>
+    <input th:type="${tipo}" th:field="*{__${campo}__}" class="form-control"
+           th:classappend="${#fields.hasErrors('__${campo}__')} ? 'is-invalid'">
+    <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
+</div>
+
+<div th:fragment="numero(campo, etiqueta, requerido, step)" class="mb-3">
+    <label th:for="${campo}" class="form-label">
+        <span th:text="${etiqueta}">Etiqueta</span>
+        <span th:if="${requerido}" class="hp-required">*</span>
+    </label>
+    <input type="number" th:step="${step}" th:field="*{__${campo}__}" class="form-control"
+           th:classappend="${#fields.hasErrors('__${campo}__')} ? 'is-invalid'">
+    <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
+</div>
+
+<div th:fragment="areaTexto(campo, etiqueta, requerido)" class="mb-3">
+    <label th:for="${campo}" class="form-label">
+        <span th:text="${etiqueta}">Etiqueta</span>
+        <span th:if="${requerido}" class="hp-required">*</span>
+    </label>
+    <textarea th:field="*{__${campo}__}" class="form-control" rows="3"
+              th:classappend="${#fields.hasErrors('__${campo}__')} ? 'is-invalid'"></textarea>
+    <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
+</div>
+
+<!-- opciones: lista de objetos con value/label (ver ViewSupport.option) o Map -->
+<div th:fragment="seleccion(campo, etiqueta, requerido, opciones, placeholder)" class="mb-3">
+    <label th:for="${campo}" class="form-label">
+        <span th:text="${etiqueta}">Etiqueta</span>
+        <span th:if="${requerido}" class="hp-required">*</span>
+    </label>
+    <select th:field="*{__${campo}__}" class="form-select"
+            th:classappend="${#fields.hasErrors('__${campo}__')} ? 'is-invalid'">
+        <option value="" th:text="${placeholder} ?: '— Seleccione —'">— Seleccione —</option>
+        <option th:each="opt : ${opciones}" th:value="${opt.value}" th:text="${opt.label}">Opción</option>
+    </select>
+    <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
+</div>
+
+<div th:fragment="multiselect(campo, etiqueta, requerido, opciones, ayuda)" class="mb-3">
+    <label th:for="${campo}" class="form-label">
+        <span th:text="${etiqueta}">Etiqueta</span>
+        <span th:if="${requerido}" class="hp-required">*</span>
+    </label>
+    <select th:field="*{__${campo}__}" class="form-select" multiple size="6"
+            th:classappend="${#fields.hasErrors('__${campo}__')} ? 'is-invalid'">
+        <option th:each="opt : ${opciones}" th:value="${opt.value}" th:text="${opt.label}">Opción</option>
+    </select>
+    <div class="form-text" th:if="${ayuda}" th:text="${ayuda}">Ayuda</div>
+    <div class="invalid-feedback" th:errors="*{__${campo}__}">Error</div>
+</div>
+
+</body>
+</html>

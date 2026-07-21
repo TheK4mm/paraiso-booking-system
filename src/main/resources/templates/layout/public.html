@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} != null ? ${title} + ' — Hotel Paraíso' : 'Hotel Paraíso — Tu descanso empieza aquí'">Hotel Paraíso</title>
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/public.css}">
+</head>
+<body class="hp-public-body">
+
+<!-- ─── Modal de autenticación (solo visitantes anónimos) ──────────────
+     Va al PRINCIPIO del body a propósito: su form de login genera el token
+     CSRF, que crea la sesión; en páginas largas (landing) el buffer de la
+     respuesta ya se habría comprometido al llegar al final del documento y
+     la creación de sesión fallaría. -->
+<th:block sec:authorize="!isAuthenticated()">
+    <th:block th:insert="~{fragments/auth :: modal(pane=${panelAuth}, abierto=${panelAuth != null})}"></th:block>
+</th:block>
+
+<nav class="hp-public-nav">
+    <div class="container d-flex align-items-center gap-3">
+        <a th:href="@{/}" class="hp-public-brand">
+            <i class="bi bi-buildings-fill"></i> Hotel Paraíso
+        </a>
+        <div class="hp-public-links d-none d-lg-flex">
+            <a th:href="@{/#habitaciones}">Habitaciones</a>
+            <a th:href="@{/#servicios}">Servicios</a>
+            <a th:href="@{/#ubicacion}">Ubicación</a>
+            <a th:href="@{/consulta-reserva}">Consultar reserva</a>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <a sec:authorize="!isAuthenticated()" th:href="@{/login}" data-hp-auth="login"
+               class="btn btn-outline-dark btn-sm hp-nav-btn">Iniciar sesión</a>
+            <div sec:authorize="hasRole('CLIENTE')" class="dropdown">
+                <button class="btn btn-outline-dark btn-sm hp-nav-btn dropdown-toggle"
+                        data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-1"></i>Mi cuenta
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" th:href="@{/mi-cuenta}">Resumen</a></li>
+                    <li><a class="dropdown-item" th:href="@{/mi-cuenta/reservas}">Mis reservas</a></li>
+                    <li><a class="dropdown-item" th:href="@{/mi-cuenta/perfil}">Mi perfil</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form th:action="@{/logout}" method="post">
+                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            <a sec:authorize="hasAnyRole('ADMIN','RECEPCIONISTA')" th:href="@{/dashboard}"
+               class="btn btn-outline-dark btn-sm hp-nav-btn"><i class="bi bi-speedometer2 me-1"></i>Panel</a>
+            <a th:href="@{/reservar}" class="btn btn-primary btn-sm hp-nav-btn">Reservar ahora</a>
+        </div>
+    </div>
+</nav>
+
+<main class="hp-public-main">
+    <section layout:fragment="content">
+        <p>Contenido</p>
+    </section>
+</main>
+
+<footer class="hp-footer-public" id="contacto">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="hp-footer-brand"><i class="bi bi-buildings-fill"></i> Hotel Paraíso</div>
+                <p class="hp-footer-text mt-2 mb-0">
+                    Un refugio de tranquilidad en el corazón de la ciudad. Habitaciones
+                    elegantes, atención cercana y todo lo que necesitas para descansar.
+                </p>
+            </div>
+            <div class="col-6 col-lg-3">
+                <h6 class="hp-footer-title">Contacto</h6>
+                <ul class="hp-footer-list">
+                    <li><i class="bi bi-geo-alt"></i> Cra. 7 # 45-12, Bogotá</li>
+                    <li><i class="bi bi-telephone"></i> +57 (601) 555 01 23</li>
+                    <li><i class="bi bi-envelope"></i> reservas@hotelparaiso.com</li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6 class="hp-footer-title">Enlaces</h6>
+                <ul class="hp-footer-list">
+                    <li><a th:href="@{/reservar}">Reservar</a></li>
+                    <li><a th:href="@{/consulta-reserva}">Consultar reserva</a></li>
+                    <!-- Solo para anónimos: el modal no se renderiza si ya hay sesión
+                         y estos enlaces no tendrían nada que abrir -->
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/registro}" data-hp-auth="registro">Crear cuenta</a>
+                    </li>
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" data-hp-auth="login">Iniciar sesión</a>
+                    </li>
+                    <li sec:authorize="hasRole('CLIENTE')"><a th:href="@{/mi-cuenta}">Mi cuenta</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3">
+                <h6 class="hp-footer-title">Horarios</h6>
+                <ul class="hp-footer-list">
+                    <li><i class="bi bi-box-arrow-in-right"></i> Check-in: 3:00 p.m.</li>
+                    <li><i class="bi bi-box-arrow-left"></i> Check-out: 12:00 m.</li>
+                    <li><i class="bi bi-headset"></i> Recepción 24 horas</li>
+                </ul>
+            </div>
+        </div>
+        <div class="hp-footer-bottom">
+            © 2026 Hotel Paraíso · Todos los derechos reservados
+        </div>
+    </div>
+</footer>
+
+<!-- ─── Toasts flash (mismo patrón que el panel) ─────────────────── -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div th:if="${success}" class="toast align-items-center text-bg-success border-0" data-hp-autoshow>
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-check-circle me-2"></i><span th:text="${success}"></span></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div th:if="${error}" class="toast align-items-center text-bg-danger border-0" data-hp-autoshow>
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}"></span></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <!-- El cierre de sesión vuelve al portal (?logout): sin modal abierto,
+         el aviso tiene que darlo el propio portal -->
+    <div th:if="${param.logout}" class="toast align-items-center text-bg-primary border-0" data-hp-autoshow>
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-box-arrow-right me-2"></i>Sesión cerrada correctamente.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div th:if="${info}" class="toast align-items-center text-bg-primary border-0" data-hp-autoshow>
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-info-circle me-2"></i><span th:text="${info}"></span></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/auth-modal.js}"></script>
+<th:block layout:fragment="scripts"></th:block>
+</body>
+</html>

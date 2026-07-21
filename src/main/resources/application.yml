@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: hotel-paraiso
+  profiles:
+    default: dev
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  flyway:
+    locations: classpath:db/migration
+
+  # Jackson 3 (Boot 4) serializa fechas en ISO-8601 por defecto
+  jackson:
+    time-zone: America/Bogota
+
+  mvc:
+    format:
+      date: iso
+      date-time: iso
+      time: iso
+
+  # spring.mail.host se define SOLO donde hay SMTP real (application-prod).
+  # Deliberadamente sin valor por defecto: Boot registra JavaMailSender en
+  # cuanto la propiedad existe, aunque esté vacía, y el envío fallaría en
+  # silencio. Sin ella, EmailConfig cae en LogEmailSender.
+  mail:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+app:
+  # URL pública de la aplicación: se usa para construir los enlaces de
+  # verificación de email (y futuros correos transaccionales)
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  email:
+    remitente: ${MAIL_FROM:no-reply@hotelparaiso.com}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Habitaciones</h1>
+            <p class="hp-page-sub">Inventario físico del hotel y su disponibilidad</p>
+        </div>
+        <a th:href="@{/habitaciones/new}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-plus-lg me-1"></i> Nueva habitación
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/habitaciones}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control" placeholder="Buscar por número o tipo…">
+        </div>
+        <select name="estado" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos los estados</option>
+            <option th:each="e : ${estados}" th:value="${e}" th:selected="${e == estado}"
+                    th:text="${e.name() == 'DISPONIBLE'} ? 'Disponible' :
+                             (${e.name() == 'OCUPADA'} ? 'Ocupada' :
+                             (${e.name() == 'MANTENIMIENTO'} ? 'Mantenimiento' : 'Bloqueada'))">Estado</option>
+        </select>
+        <select name="tipoHabitacionId" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos los tipos</option>
+            <option th:each="t : ${tipos}" th:value="${t.id}" th:selected="${t.id == tipoHabitacionId}"
+                    th:text="${t.nombre}">Tipo</option>
+        </select>
+        <div class="form-check" sec:authorize="hasRole('ADMIN')">
+            <input class="form-check-input" type="checkbox" name="incluirInactivos" value="true"
+                   id="incluirInactivos" th:checked="${incluirInactivos}" onchange="this.form.submit()">
+            <label class="form-check-label small" for="incluirInactivos">Incluir inactivas</label>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/habitaciones}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+        <a th:href="${'/habitaciones/export.csv' + queryBase}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-door-open', 'Sin habitaciones',
+                          'Registra las habitaciones físicas del hotel.',
+                          '/habitaciones/new', 'Nueva habitación')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'numero', 'Número')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'piso', 'Piso')}"></th>
+                    <th>Tipo</th>
+                    <th>Capacidad</th>
+                    <th>Precio/Noche</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'estado', 'Estado')}"></th>
+                    <th class="text-end" sec:authorize="hasRole('ADMIN')">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${page.content}">
+                    <td><a th:href="@{/habitaciones/{id}/edit(id=${h.id})}" class="hp-row-link"
+                           th:text="'Hab. ' + ${h.numero}">101</a></td>
+                    <td th:text="${h.piso}">1</td>
+                    <td th:text="${h.tipoHabitacionNombre}">Tipo</td>
+                    <td><i class="bi bi-people me-1 text-muted"></i><span th:text="${h.capacidadMaxima}"></span></td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(h.precioBaseNoche, 0, 'POINT', 0, 'COMMA')} + ' COP'">precio</td>
+                    <td><span th:replace="~{fragments/badges :: habitacion(${h.estado})}"></span></td>
+                    <td class="text-end" sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/habitaciones/{id}/edit(id=${h.id})}"
+                           class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <form th:action="@{/habitaciones/{id}/delete(id=${h.id})}" method="post" class="d-inline"
+                              th:data-hp-confirm="|¿Desactivar y bloquear la habitación ${h.numero}?|" th:if="${h.activo}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/tarjeta}">
+<head>
+    <title>Acceso denegado</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="text-center">
+        <div class="display-3 fw-bold text-danger">403</div>
+        <h1 class="h5 mt-2">Acceso denegado</h1>
+        <p class="text-muted small mb-4">No tienes permisos para acceder a esta sección.</p>
+        <div class="d-grid gap-2">
+            <a sec:authorize="hasRole('CLIENTE')" th:href="@{/mi-cuenta}" class="btn btn-primary">
+                <i class="bi bi-person-circle me-1"></i> Ir a mi cuenta
+            </a>
+            <a sec:authorize="hasAnyRole('ADMIN','RECEPCIONISTA')" th:href="@{/dashboard}" class="btn btn-primary">
+                <i class="bi bi-speedometer2 me-1"></i> Ir al panel
+            </a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/login}" class="btn btn-primary">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar sesión
+            </a>
+            <a th:href="@{/}" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-1"></i> Volver al inicio
+            </a>
+        </div>
+    </div>
+</section>
+</body>
+</html>

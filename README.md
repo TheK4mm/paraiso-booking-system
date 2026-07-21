@@ -1,328 +1,167 @@
-# Hotel Paraíso — Sistema Full-Stack
+# Hotel Paraíso — Plataforma Hotelera · v2.1
 
-Sistema de Gestión de Reservas para el **Hotel Paraíso** — Aplicación **full-stack** desarrollada con **Spring Boot 3**, **Spring Data JPA**, **Thymeleaf** y **PostgreSQL**.
+Aplicación **full-stack profesional** para la operación de un hotel: **portal público de reservas para huéspedes** (landing page, disponibilidad en línea, reserva como invitado o con cuenta) + back-office completo con reservas con máquina de estados, facturación con IVA, pagos parciales, calendario de ocupación, dashboard con métricas y control de acceso por roles.
 
-El proyecto expone simultáneamente:
-- Una **API REST** completa bajo `/api/...` (lista para integrarse con clientes externos o un frontend SPA).
-- Una **interfaz web dinámica** servida con **Thymeleaf** bajo `/` (vistas reutilizables alimentadas por DTOs convertidos a `Map`).
+**Stack:** Java 17 · Spring Boot 4.1 (Framework 7, Security 7, Jackson 3) · Spring Data JPA · Flyway 12 · PostgreSQL 16+ · Thymeleaf · Bootstrap 5 (vendorizado) · Chart.js · MapStruct · Lombok · Testcontainers.
 
 ---
 
-# Vista de la aplicación
+## Características
 
-![Dashboard](docs/screenshots/dashboard.png)
-![Tipo de habitaciones](docs/screenshots/tipos-habitaciones.png)
-![Agregar un cliente](docs/screenshots/agregar-cliente.png)
+### Portal público (huéspedes)
+- **Landing page** de marketing en `/`: hero, habitaciones con fotos y comodidades, servicios, galería, testimonios, ubicación y CTAs — sin exigir login.
+- **Flujo de reservas sin registro** (`/reservar`): fechas → disponibilidad real (excluye solapes bajo la misma regla que el back-office) → tarjetas con foto/precio/total de estancia → datos del huésped → código de confirmación. El invitado queda registrado como cliente por su email (get-or-create, sin duplicados).
+- **Consulta de reserva por código + email** (`/consulta-reserva`), con mensaje único anti-enumeración.
+- **Rol `CLIENTE` con portal propio** (`/mi-cuenta`): resumen, historial, detalle con saldos, cancelación (solo PENDIENTE/CONFIRMADA) y edición de perfil. Los clientes inician sesión con su **email**.
+- **Login y registro en modal sobre el portal**: iniciar sesión o crear cuenta abre un modal (fondo desenfocado, login ⇄ registro sin salir) sobre la página actual — sin cambio de página; los errores y el éxito se muestran dentro del propio modal y, tras entrar, el visitante permanece donde estaba. Las páginas `/login` y `/registro` clásicas siguen existiendo como fallback (personal y navegación sin JS).
+- **Registro con verificación de email**: la cuenta no puede entrar y la ficha de cliente solo se crea/vincula tras abrir el enlace de un solo uso (24 h; por log al no haber SMTP). Nadie ve el historial de un email que no controla.
+- **Tres zonas de seguridad**: pública / cliente (`/mi-cuenta/**`) / back-office (todo lo demás, default-cerrado con `anyRequest().hasAnyRole("ADMIN","RECEPCIONISTA")`). La API `/api/**` es exclusiva del personal.
 
----
+### Operación
+- **Reservas** con máquina de estados (`PENDIENTE → CONFIRMADA → CHECKIN → CHECKOUT`, con `CANCELADA` y `NO_SHOW`) y acciones contextuales en la interfaz.
+- **Disponibilidad garantizada bajo concurrencia**: verificación de solapamiento de fechas con bloqueo pesimista — dos recepcionistas no pueden reservar la misma habitación para las mismas noches.
+- **Check-in/check-out sincronizado** con el estado físico de las habitaciones (`OCUPADA`/`DISPONIBLE`).
+- **Calendario mensual** de ocupación renderizado en servidor, con chips por estado y navegación por mes.
+- **Facturación** con IVA configurable (19 % por defecto), descuentos validados (nunca totales negativos) y numeración por secuencia de base de datos (sin colisiones).
+- **Pagos parciales** validados contra el saldo pendiente bajo lock; el estado de la factura (`PENDIENTE → PAGADA_PARCIALMENTE → PAGADA`) se deriva automáticamente de los pagos aprobados.
+- **Dashboard** con KPIs del día (ocupación, llegadas, salidas, ingresos del mes, facturas por cobrar) y gráficos de 12 meses (Chart.js con datos inline, sin fetch).
 
-## Descripción
-
-El sistema centraliza la operación del Hotel Paraíso permitiendo:
-
-- **Gestión de clientes** — Registro, búsqueda y actualización de huéspedes
-- **Gestión de habitaciones** — Catálogo por tipo, disponibilidad por rango de fechas
-- **Gestión de reservas** — Ciclo completo con máquina de estados (Pendiente → Confirmada → Check-in → Check-out)
-- **Gestión de pagos** — Registro de pagos parciales con validación contra saldo pendiente
-- **Facturación** — Generación automática con cálculo de IVA y descuentos
-- **Servicios adicionales** — Spa, alimentación, transporte, lavandería, etc.
-- **Control de empleados** — Recepcionistas y personal que gestiona las reservas
-
-### Alcance
-
-| Incluido | No incluido |
-|----------|-------------|
-| API REST (`/api/...`) — CRUD completo 8 entidades | Autenticación JWT / OAuth2 |
-| Frontend Thymeleaf dinámico (`/`) | Reportes gráficos / Dashboard |
-| Control de disponibilidad por fechas | Notificaciones email/SMS |
-| Máquina de estados para reservas | Integración con pasarelas de pago |
-| Cálculo automático de precios | Módulo de inventario |
-| Templates genéricos reutilizables | |
-| Facturación con IVA y descuentos | |
+### Plataforma
+- **Autenticación** con Spring Security: login con sesiones, remember-me, registro público y recuperación de contraseña por token de un solo uso (30 min; el enlace se emite por log al no haber SMTP).
+- **Roles** `ADMIN` y `RECEPCIONISTA` con autorización por rutas y a nivel de método (`@PreAuthorize`).
+- **CSRF activo** en todos los formularios; la API REST usa HTTP Basic y responde 401/`ProblemDetail` JSON.
+- **Registro de actividad** (`activity_log`): reservas, transiciones, pagos, facturas, usuarios y accesos — persistido solo si la transacción confirma (`@TransactionalEventListener AFTER_COMMIT`).
+- **Auditoría JPA** uniforme (`creado_en`, `actualizado_en`, `creado_por`, `actualizado_por`) desde el usuario autenticado.
+- **Listados** con búsqueda, filtros combinables (Specifications), ordenamiento con lista blanca, paginación y **exportación CSV** que respeta los filtros vigentes.
+- **Esquema versionado con Flyway** (única fuente de verdad; `ddl-auto=validate`).
+- **UI tipo SaaS** con design system propio, assets 100 % locales (sin CDN), validación visual por campo, estados vacíos, modales de confirmación y toasts.
 
 ---
 
-## Tecnologías
+## Puesta en marcha
 
-| Componente | Tecnología |
-|------------|-----------|
-| Lenguaje | Java 17 |
-| Framework | Spring Boot 3.2.4 |
-| Persistencia | Spring Data JPA + Hibernate |
-| Vista | Thymeleaf + Layout Dialect |
-| UI | Bootstrap 5.3 + Bootstrap Icons |
-| Base de datos | PostgreSQL 16 |
-| Validaciones | Jakarta Validation (`@Valid`) |
-| Utilidades | Lombok, MapStruct |
-| Build | Maven |
-| Pruebas API | Postman |
+### Requisitos
+- JDK 17+
+- Maven 3.9+
+- PostgreSQL 14+ en `localhost:5432`
+
+### Pasos
+
+```bash
+# 1. Crear la base de datos (Flyway crea el esquema y los datos al arrancar)
+psql -U postgres -c "CREATE DATABASE hotel_paraiso;"
+
+# 2. Ejecutar (perfil dev por defecto: incluye datos de demostración)
+mvn spring-boot:run
+
+# 3. Abrir
+#    UI:  http://localhost:8080
+#    API: http://localhost:8080/api/... (HTTP Basic)
+```
+
+### Credenciales iniciales (solo desarrollo — cambiar en producción)
+
+| Usuario                    | Contraseña     | Rol           |
+|----------------------------|----------------|---------------|
+| `admin`                    | `admin123`     | ADMIN         |
+| `recepcion`                | `recepcion123` | RECEPCIONISTA |
+| `cliente@hotelparaiso.com` | `cliente123`   | CLIENTE (portal de huéspedes) |
+
+### Perfiles
+
+| Perfil | Uso | Notas |
+|--------|-----|-------|
+| `dev` (por defecto) | Desarrollo local | Datos demo (`db/seed-dev`), SQL en log, credenciales con defaults |
+| `prod` | Producción | Sin defaults de credenciales; requiere `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REMEMBER_ME_KEY`; caché de plantillas activa; `flyway.clean-disabled` |
+
+```bash
+# Ejemplo producción
+SPRING_PROFILES_ACTIVE=prod DB_URL=jdbc:postgresql://host:5432/hotel_paraiso \
+DB_USERNAME=app DB_PASSWORD=*** REMEMBER_ME_KEY=*** java -jar target/hotel-paraiso-2.0.0.jar
+```
 
 ---
 
 ## Arquitectura
 
-El proyecto sigue una arquitectura en capas con separación clara de responsabilidades y dos capas de presentación simultáneas (REST + MVC):
+**Package-by-feature**: cada módulo agrupa entidad, repositorio, DTOs, mapper (MapStruct), servicio y controladores (REST + vista).
 
 ```
-┌────────────────────────────┐    ┌────────────────────────────┐
-│  Cliente externo / Postman │    │  Navegador (Thymeleaf)     │
-└─────────────┬──────────────┘    └─────────────┬──────────────┘
-              │ JSON                            │ HTML
-┌─────────────▼──────────────┐    ┌─────────────▼──────────────┐
-│  controller.* (REST)       │    │  controller.view.* (MVC)   │
-│  @RestController           │    │  @Controller               │
-│  /api/...                  │    │  /clientes, /habitaciones… │
-└─────────────┬──────────────┘    └─────────────┬──────────────┘
-              │ DTOs                            │ Map<String,Object>
-              └────────────┬───────────────────┘
-                           │
-              ┌────────────▼─────────────┐
-              │     SERVICE LAYER        │
-              │   findAll()              │
-              │   findAllAsMap()  ◄──┐   │
-              │   findByIdAsMap() ◄──┘   │ Implementan IViewMapService<R>
-              └────────────┬─────────────┘
-                           │
-              ┌────────────▼─────────────┐
-              │   REPOSITORY (JPA)       │
-              └────────────┬─────────────┘
-                           │
-              ┌────────────▼─────────────┐
-              │       PostgreSQL         │
-              └──────────────────────────┘
+src/main/java/com/hotel/paraiso/
+├── cliente/           Cliente + repo + specs + DTOs + mapper + service + controllers
+├── empleado/          (misma estructura)
+├── habitacion/        Habitacion y TipoHabitacion (cohesión de catálogo)
+├── servicio/          Servicios adicionales
+├── reserva/           Reserva + máquina de estados + CalendarioService
+├── facturacion/       Factura y Pago (reglas cruzadas de saldo/estado)
+├── dashboard/         Métricas agregadas (consultas nativas, sin entidades en memoria)
+├── portal/            Cara pública: landing, wizard /reservar, consulta por código,
+│   └── cuenta/        y portal del huésped /mi-cuenta (rol CLIENTE)
+├── security/          Usuario, roles, SecurityConfig (3 zonas), registro de huéspedes
+│                      con verificación de email, recuperación, admin de cuentas
+└── common/
+    ├── audit/         AuditableEntity, AuditorAware, ActivityLog + listeners de eventos
+    ├── crud/          AbstractCrudService (CRUD genérico de catálogos), BaseRepository, CrudMapper
+    ├── exception/     Excepciones + ApiExceptionHandler (ProblemDetail) + MvcExceptionHandler
+    ├── mapper/        Configuración central de MapStruct (unmapped = ERROR)
+    ├── validation/    @RangoFechasValido (error visible sobre fechaSalida)
+    └── web/           PageResponse, SortWhitelist, CsvExporter, atributos globales de vista
 ```
+
+### Decisiones técnicas relevantes
+
+| Tema | Decisión |
+|------|----------|
+| CRUD repetido | `AbstractCrudService<E, REQ, RES>` solo para los 5 catálogos; Reserva/Pago/Factura tienen servicios dedicados (su lógica de dominio no cabe en una abstracción genérica) |
+| Mapeo | MapStruct con `unmappedTargetPolicy = ERROR`: si una entidad gana un campo y el mapper no lo contempla, el build falla |
+| Códigos de negocio | Secuencias PostgreSQL (`seq_codigo_reserva`, `seq_numero_factura`): generación atómica, sin race conditions |
+| Concurrencia | Locks pesimistas para disponibilidad y saldo + `@Version` (lock optimista) en Reserva/Pago/Factura/Habitación |
+| N+1 | `@EntityGraph` (to-one) en listados; el detalle de reserva se carga con 3 consultas fetch constantes |
+| Búsqueda | `JpaSpecificationExecutor` con specs componibles por módulo; sort saneado por lista blanca |
+| Errores API | RFC 7807 (`ProblemDetail`) con manejadores para validación, type-mismatch, integridad, locking y acceso |
+| Errores UI | Reglas de negocio → mensaje flash en la página anterior; páginas 403/404/500 propias |
+| Frontend | Thymeleaf + fragments tipados (`th:field`/`th:errors`); Bootstrap, iconos, Chart.js y fuente Inter servidos localmente |
 
 ---
 
-## Modelo de Datos
+## API REST
 
-### Entidades
+Autenticación: HTTP Basic (o sesión del navegador). Listados paginados: `?page=&size=&sort=campo,dir` + filtros.
 
-| Entidad | Descripción |
-|---------|-------------|
-| `Cliente` | Huéspedes del hotel con datos personales |
-| `Empleado` | Personal del hotel que gestiona reservas |
-| `TipoHabitacion` | Categorías (Individual, Doble, Suite, Familiar, etc.) |
-| `Habitacion` | Habitaciones físicas con número, piso y estado |
-| `Servicio` | Servicios adicionales (spa, alimentación, transporte) |
-| `Reserva` | Entidad central que conecta clientes, habitaciones y servicios |
-| `Pago` | Pagos parciales o totales asociados a una reserva |
-| `Factura` | Documento fiscal con subtotal, IVA y descuentos |
+| Recurso | Base | Extras |
+|---------|------|--------|
+| Tipos de habitación | `/api/tipos-habitacion` | `?q=` |
+| Habitaciones | `/api/habitaciones` | `?q=&estado=&tipoHabitacionId=` · `GET /disponibles?entrada&salida` |
+| Clientes | `/api/clientes` | `?q=` · `GET /search?termino=` |
+| Empleados (ADMIN) | `/api/empleados` | `?q=` |
+| Servicios | `/api/servicios` | `?q=&categoria=` · `GET /categoria/{cat}` |
+| Reservas | `/api/reservas` | `?q=&estado=&clienteId=&desde=&hasta=` · `GET /codigo/{codigo}` · `PATCH /{id}/estado` |
+| Pagos | `/api/pagos` | `?estado=&reservaId=` · `GET /reserva/{id}` |
+| Facturas | `/api/facturas` | `?q=&estado=` · `GET /reserva/{id}` |
 
-### Máquina de Estados — Reserva
-
-```
-PENDIENTE ──confirmar──▶ CONFIRMADA ──check-in──▶ CHECKIN ──check-out──▶ CHECKOUT
-    │            │                                   │
-    │            └──cancelar──┐                    no_show ──▶ NO_SHOW
-    └─cancelar─▶ CANCELADA ◄──┘
-```
-
-Las transiciones inválidas retornan HTTP 422 con mensaje descriptivo.
+Códigos: `400` validación/parámetros, `401` sin autenticación, `403` sin permisos/CSRF, `404` no encontrado, `409` conflicto de datos o concurrencia, `422` regla de negocio.
 
 ---
 
-## Patrón Full-Stack Implementado
+## Pruebas
 
-Para evitar duplicar HTML por cada entidad, el proyecto implementa un patrón genérico **DTO ↔ Map ↔ Template**:
-
-### 1) DTOs con `toMap()`
-
-Cada `DTO.Response` expone su contenido como `Map<String, Object>` con claves específicas y orden estable (`LinkedHashMap`). Estas claves son las que la vista referencia.
-
-```java
-public Map<String, Object> toMap() {
-    Map<String, Object> map = new LinkedHashMap<>();
-    map.put("id", this.id);
-    map.put("nombreCompleto", this.nombreCompleto);
-    map.put("email", this.email);
-    // ...
-    return map;
-}
+```bash
+mvn test         # unitarias (Mockito): máquina de estados, precios, saldos, IVA, descuentos
+mvn verify       # + integración con Testcontainers (requiere Docker; se omiten sin él)
 ```
 
-### 2) Services con `findAllAsMap()` / `findByIdAsMap()`
-
-Todos los servicios implementan la interfaz `IViewMapService<R>`:
-
-```java
-public interface IViewMapService<R> {
-    List<Map<String, Object>> findAllAsMap();
-    Map<String, Object> findByIdAsMap(Long id);
-}
-```
-
-Además, `TipoHabitacionService` implementa `ICategoryService` (que extiende `IViewMapService`) y expone el alias semántico `getAllCategoriesAsMap()`.
-
-La implementación reutiliza siempre la lógica existente:
-
-```java
-@Override
-public List<Map<String, Object>> findAllAsMap() {
-    return findAll().stream()
-            .map(ClienteDTO.Response::toMap)
-            .collect(Collectors.toList());
-}
-```
-
-### 3) ViewControllers: construyen columnas + invocan `findAllAsMap()`
-
-Cada ViewController (paquete `controller.view`) define la estructura de columnas y campos del formulario, llama al servicio y siempre retorna `pages/list` o `pages/form`:
-
-```java
-@GetMapping
-public String list(Model model) {
-    List<Map<String, String>> columns = List.of(
-        column("id", "ID"),
-        column("nombreCompleto", "Nombre Completo"),
-        column("email", "Email")
-    );
-    model.addAttribute("columns", columns);
-    model.addAttribute("rows", service.findAllAsMap());
-    model.addAttribute("entityPath", "/clientes");
-    return "pages/list";
-}
-```
-
-### 4) Un único template `pages/list.html`
-
-Renderiza cualquier entidad. Itera columnas y filas (Maps):
-
-```html
-<th th:each="col : ${columns}" th:text="${col.label}"></th>
-<td th:each="col : ${columns}" th:text="${row.get(col.key)}"></td>
-```
-
-### 5) Un único template `pages/form.html`
-
-Sirve tanto para **crear** como para **editar**. El controlador es quien decide pasando `isEdit=true|false` y la URL `action` correspondiente. El fragmento `fragments/form.html` soporta tipos: `text`, `email`, `number`, `date`, `password`, `textarea`, `select`, `multiselect`, `checkbox`.
+- `ReservaServiceTest`, `PagoServiceTest`, `FacturaServiceTest`: reglas de negocio puras.
+- `ReservaRepositoryIT`: solapamiento de fechas y secuencias contra PostgreSQL real.
+- `SecurityFlowIT`: redirecciones, 401 de API, separación de roles y CSRF con MockMvc.
 
 ---
 
-## Endpoints
+## Estructura de la base de datos
 
-### API REST — todas bajo `/api/...`
+Migraciones en `src/main/resources/db/migration`:
 
-| Recurso | Prefijo | Endpoints estándar |
-|---------|---------|--------------------|
-| Tipos de Habitación | `/api/tipos-habitacion` | `GET`, `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}` |
-| Habitaciones | `/api/habitaciones` | + `GET /disponibles?entrada&salida` |
-| Clientes | `/api/clientes` | + `GET /search?termino` |
-| Empleados | `/api/empleados` | CRUD estándar |
-| Servicios | `/api/servicios` | + `GET /categoria/{categoria}` |
-| Reservas | `/api/reservas` | + `GET /codigo/{codigo}`, `GET /cliente/{id}`, `GET /estado/{estado}`, `PATCH /{id}/estado` |
-| Pagos | `/api/pagos` | + `GET /reserva/{reservaId}` |
-| Facturas | `/api/facturas` | + `GET /reserva/{reservaId}` |
-
-### Interfaz Web Thymeleaf — rutas en raíz `/`
-
-| Ruta | Descripción |
-|------|-------------|
-| `GET /` | Página de inicio con catálogo de módulos |
-| `GET /<entidad>` | Listado dinámico (tabla genérica) |
-| `GET /<entidad>/new` | Formulario de creación |
-| `GET /<entidad>/{id}/edit` | Formulario de edición prellenado |
-| `POST /<entidad>` | Crear |
-| `POST /<entidad>/{id}` | Actualizar |
-| `POST /<entidad>/{id}/delete` | Desactivar / cancelar |
-
-Entidades disponibles en la UI:
-`/tipos-habitacion`, `/habitaciones`, `/clientes`, `/empleados`, `/servicios`, `/reservas`, `/pagos`, `/facturas`.
-
-### Manejo de errores (API)
-
-| Código | Tipo | Ejemplo |
-|--------|------|---------|
-| `400` | Validación | Campos obligatorios faltantes, email inválido |
-| `400` | Duplicado | Email o documento ya registrado |
-| `404` | No encontrado | Recurso con ID inexistente |
-| `422` | Regla de negocio | Habitación ya reservada, transición de estado inválida |
-| `500` | Error interno | Error inesperado del servidor |
-
----
-
-## Estructura del Proyecto
-
-```
-hotel-paraiso
-├── pom.xml
-├── db/
-│   └── database.sql
-└── src/main/
-    ├── resources/
-    │   ├── application.properties
-    │   └── templates/
-    │       ├── layout/
-    │       │   └── base.html          ← Layout decorador (layout-dialect)
-    │       ├── fragments/
-    │       │   ├── navbar.html        ← Barra de navegación
-    │       │   ├── alerts.html        ← Flash messages
-    │       │   ├── table.html         ← Tabla genérica reutilizable
-    │       │   └── form.html          ← Formulario genérico (create + edit)
-    │       └── pages/
-    │           ├── home.html          ← Página de inicio
-    │           ├── list.html          ← Vista única de listado
-    │           └── form.html          ← Vista única de formulario
-    └── java/com/hotel/paraiso/
-        ├── HotelParaisoApplication.java
-        ├── model/              ← Entidades JPA
-        ├── repository/         ← Spring Data JPA
-        ├── dto/                ← DTOs Request/Response + toMap()
-        ├── service/
-        │   ├── IViewMapService.java   ← Interfaz base findAllAsMap/findByIdAsMap
-        │   ├── ICategoryService.java  ← Interfaz para TipoHabitacion
-        │   ├── ClienteService.java    implements IViewMapService<ClienteDTO.Response>
-        │   ├── EmpleadoService.java   …
-        │   ├── HabitacionService.java …
-        │   ├── ServicioService.java   …
-        │   ├── ReservaService.java    …
-        │   ├── PagoService.java       …
-        │   └── FacturaService.java    …
-        ├── controller/         ← API REST (@RestController, /api/...)
-        │   ├── ClienteController.java
-        │   ├── EmpleadoController.java
-        │   ├── HabitacionController.java
-        │   ├── TipoHabitacionController.java
-        │   ├── ServicioController.java
-        │   ├── ReservaController.java
-        │   ├── PagoController.java
-        │   └── FacturaController.java
-        ├── controller/view/    ← MVC Thymeleaf (@Controller, rutas raíz)
-        │   ├── HomeViewController.java
-        │   ├── ViewSupport.java        ← Helpers de columnas y campos
-        │   ├── ClienteViewController.java
-        │   ├── EmpleadoViewController.java
-        │   ├── HabitacionViewController.java
-        │   ├── TipoHabitacionViewController.java
-        │   ├── ServicioViewController.java
-        │   ├── ReservaViewController.java
-        │   ├── PagoViewController.java
-        │   └── FacturaViewController.java
-        └── exception/          ← Manejo global de errores
-            ├── ResourceNotFoundException.java
-            ├── BadRequestException.java
-            ├── BusinessException.java
-            └── GlobalExceptionHandler.java
-```
-
----
-
-## Cómo Ejecutar
-
-1. **Configurar PostgreSQL** — crear la base de datos y aplicar `db/database.sql`.
-2. **Ajustar credenciales** en `src/main/resources/application.properties` (`spring.datasource.url`, `username`, `password`).
-3. **Compilar** — `mvn clean package -DskipTests`
-4. **Ejecutar** — `mvn spring-boot:run` o `java -jar target/hotel-paraiso-1.0.0.jar`
-5. **Abrir**:
-   - UI web: `http://localhost:8080/`
-   - API REST: `http://localhost:8080/api/clientes` (etc.)
-
----
-
-## Notas sobre cambios respecto a la versión previa
-
-- Se eliminó `server.servlet.context-path=/api`. Los REST controllers ahora declaran el prefijo `/api/...` directamente en `@RequestMapping`, dejando libre la raíz `/` para servir Thymeleaf.
-- Se corrigió el `HabitacionController` que antes quedaba en `/api/api/habitaciones` por duplicación de prefijo.
-- Se introdujeron las interfaces `IViewMapService<R>` y `ICategoryService`, sin alterar la firma de los métodos `findAll()/findById()/create/update/delete` previos.
-- Los DTOs conservan su estructura `Request` / `Response` original; solo se añadió o completó el método `toMap()` en cada Response con claves en español coherentes con los campos.
-- La API REST funciona igual que antes — únicamente cambia el prefijo unificado a `/api/...`.
+- `V1__esquema_base.sql` — dominio completo: tablas, CHECKs, FKs con políticas, índices, columnas de auditoría, `version` (lock optimista) y secuencias de códigos.
+- `V2__seguridad_auditoria.sql` — `usuarios`, `password_reset_tokens`, `activity_log`.
+- `V3__seed_admin.sql` — usuario administrador inicial (hash bcrypt vía `pgcrypto`).
+- `V4__portal_publico.sql` — rol `CLIENTE`, vínculo `usuarios.cliente_id`, verificación de email (`tokens_verificacion_email` con payload de la ficha pendiente), `imagen`/`comodidades` en tipos de habitación.
+- `db/seed-dev/V1000__datos_demo.sql`, `V1001__usuarios_demo.sql`, `V1002__portal_demo.sql` — datos de demostración (solo perfil `dev`; fuera del árbol `db/migration` para que prod nunca los aplique). En dev `flyway.out-of-order=true`: las migraciones reales nuevas (V5…) siempre quedan "detrás" de los seeds V1000+.

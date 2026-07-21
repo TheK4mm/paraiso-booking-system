@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hotel_paraiso}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed-dev
+    # Los seeds dev van numerados V1000+; toda migración real nueva (V4, V5…)
+    # queda "fuera de orden" respecto a ellos en una BD dev ya poblada.
+    # En prod no existen los V1000+, así que el orden estricto se conserva.
+    out-of-order: true
+
+  thymeleaf:
+    cache: false
+
+app:
+  security:
+    remember-me-key: ${REMEMBER_ME_KEY:clave-dev-no-usar-en-produccion}
+
+logging:
+  level:
+    com.hotel.paraiso: DEBUG
+    org.hibernate.SQL: DEBUG

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Usuarios</h1>
+            <p class="hp-page-sub">Cuentas de acceso al sistema y sus roles</p>
+        </div>
+        <a th:href="@{/usuarios/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo usuario
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/usuarios}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control"
+                   placeholder="Buscar por usuario, email o nombre…">
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/usuarios}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-shield-lock', 'Sin usuarios',
+                          'Crea cuentas para el personal del hotel.', '/usuarios/new', 'Nuevo usuario')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'username', 'Usuario')}"></th>
+                    <th>Nombre</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'email', 'Email')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'rol', 'Rol')}"></th>
+                    <th>Estado</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'creadoEn', 'Creado')}"></th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${page.content}" th:with="esYo=${u.username == #authentication.name}">
+                    <td>
+                        <span class="fw-semibold" th:text="${u.username}">user</span>
+                        <span th:if="${esYo}" class="hp-badge hp-badge-neutral ms-1">tú</span>
+                    </td>
+                    <td th:text="${u.nombreCompleto}">nombre</td>
+                    <td th:text="${u.email}">email</td>
+                    <td>
+                        <span th:if="${u.rol.name() == 'ADMIN'}" class="hp-badge hp-badge-primary">Administrador</span>
+                        <span th:if="${u.rol.name() == 'RECEPCIONISTA'}" class="hp-badge hp-badge-info">Recepcionista</span>
+                        <span th:if="${u.rol.name() == 'CLIENTE'}" class="hp-badge hp-badge-neutral">Cliente</span>
+                    </td>
+                    <td>
+                        <span th:replace="~{fragments/badges :: activo(${u.activo})}"></span>
+                        <span th:unless="${u.emailVerificado}" class="hp-badge hp-badge-warning ms-1"
+                              title="Aún no ha verificado su email">Sin verificar</span>
+                    </td>
+                    <td class="small" th:text="${#temporals.format(u.creadoEn, 'dd MMM yyyy')}">fecha</td>
+                    <td class="text-end">
+                        <form th:unless="${esYo or u.rol.name() == 'CLIENTE'}"
+                              th:action="@{/usuarios/{id}/rol(id=${u.id})}" method="post"
+                              class="d-inline"
+                              th:data-hp-confirm="|¿Cambiar el rol de ${u.username}?|">
+                            <input type="hidden" name="rol"
+                                   th:value="${u.rol.name() == 'ADMIN'} ? 'RECEPCIONISTA' : 'ADMIN'">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    th:title="${u.rol.name() == 'ADMIN'} ? 'Convertir en recepcionista' : 'Convertir en administrador'">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </form>
+                        <form th:unless="${esYo}" th:action="@{/usuarios/{id}/toggle(id=${u.id})}" method="post"
+                              class="d-inline"
+                              th:data-hp-confirm="${u.activo} ? |¿Desactivar la cuenta ${u.username}?| : |¿Activar la cuenta ${u.username}?|">
+                            <button type="submit" class="btn btn-sm"
+                                    th:classappend="${u.activo} ? 'btn-outline-danger' : 'btn-outline-success'"
+                                    th:title="${u.activo} ? 'Desactivar' : 'Activar'">
+                                <i class="bi" th:classappend="${u.activo} ? 'bi-person-dash' : 'bi-person-check'"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>

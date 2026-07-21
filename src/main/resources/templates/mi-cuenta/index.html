@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+<head>
+    <title>Mi cuenta</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div th:replace="~{mi-cuenta/nav :: menu('resumen')}"></div>
+            </div>
+            <div class="col-lg-9">
+                <h1 class="hp-section-title mb-1">
+                    Hola<span th:if="${cliente}" th:text="|, ${cliente.nombre}|">, huésped</span> 👋
+                </h1>
+                <p class="text-muted mb-4">Bienvenido a tu cuenta del Hotel Paraíso.</p>
+
+                <!-- Ficha sin vincular: el email ya tenía historial al registrarse,
+                     y solo se vincula tras verificar el correo -->
+                <div th:unless="${cliente}" class="alert alert-warning">
+                    <i class="bi bi-envelope-exclamation me-1"></i>
+                    Ya existían reservas a nombre de este email. Verifícalo para vincular
+                    tu historial y poder editar tus datos.
+                    <form th:action="@{/verificar-email/reenviar}" method="post" class="mt-2">
+                        <input type="hidden" name="email" th:value="${#authentication.name}">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            Enviarme el enlace de verificación
+                        </button>
+                    </form>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Reservas en total</div>
+                                <div class="fs-3 fw-bold" th:text="${totalReservas}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Próximas estadías</div>
+                                <div class="fs-3 fw-bold" th:text="${#lists.size(proximas)}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h2 class="h6 fw-bold mb-0">Próximas estadías</h2>
+                    <a th:href="@{/reservar}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i>Nueva reserva
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(proximas)}" class="card">
+                    <div class="card-body text-center py-4">
+                        <i class="bi bi-calendar-plus" style="font-size: 1.8rem; color: var(--hp-text-muted);"></i>
+                        <p class="text-muted mt-2 mb-3">No tienes estadías próximas.</p>
+                        <a th:href="@{/reservar}" class="btn btn-outline-primary btn-sm">Reservar ahora</a>
+                    </div>
+                </div>
+
+                <div class="card" th:unless="${#lists.isEmpty(proximas)}">
+                    <div class="list-group list-group-flush">
+                        <a th:each="r : ${proximas}" class="list-group-item list-group-item-action"
+                           th:href="@{/mi-cuenta/reservas/{c}(c=${r.codigoReserva})}">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <div>
+                                    <span class="fw-semibold" th:text="${r.codigoReserva}">RES</span>
+                                    <span th:replace="~{fragments/badges :: reserva(${r.estado})}"></span>
+                                </div>
+                                <div class="text-muted small">
+                                    <span th:text="${#temporals.format(r.fechaEntrada, 'd MMM')}">—</span>
+                                    <i class="bi bi-arrow-right mx-1"></i>
+                                    <span th:text="${#temporals.format(r.fechaSalida, 'd MMM yyyy')}">—</span>
+                                    · <span th:text="${#numbers.formatDecimal(r.precioTotal, 0, 'POINT', 0, 'COMMA')} + ' COP'">—</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

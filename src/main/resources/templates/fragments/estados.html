@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Estado vacío con llamada a la acción -->
+<div th:fragment="vacio(icono, titulo, mensaje, ctaUrl, ctaTexto)" class="hp-empty">
+    <i th:class="'bi ' + ${icono}"></i>
+    <h6 th:text="${titulo}">Sin registros</h6>
+    <p class="small mb-3" th:text="${mensaje}">Aún no hay datos para mostrar.</p>
+    <a th:if="${ctaUrl != null}" th:href="@{${ctaUrl}}" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg me-1"></i><span th:text="${ctaTexto}">Crear</span>
+    </a>
+</div>
+
+</body>
+</html>

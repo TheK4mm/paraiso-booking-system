@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/servicios}">Servicios</a></li>
+            <li class="breadcrumb-item active" th:text="${editId != null} ? 'Editar' : 'Nuevo'">Nuevo</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <h1 class="hp-page-title" th:text="${editId != null} ? 'Editar servicio' : 'Nuevo servicio'">Servicio</h1>
+    </div>
+
+    <div class="card" style="max-width: 720px;">
+        <div class="card-body p-4">
+            <form th:action="${editId != null} ? @{/servicios/{id}(id=${editId})} : @{/servicios}"
+                  th:object="${request}" method="post" novalidate>
+                <div th:insert="~{fragments/campos :: entrada('nombre', 'Nombre', 'text', true)}"></div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
+                <div class="row">
+                    <div class="col-md-6" th:insert="~{fragments/campos :: numero('precio', 'Precio (COP)', true, '0.01')}"></div>
+                    <div class="col-md-6 mb-3">
+                        <label for="categoria" class="form-label">Categoría <span class="hp-required">*</span></label>
+                        <select th:field="*{categoria}" class="form-select"
+                                th:classappend="${#fields.hasErrors('categoria')} ? 'is-invalid'">
+                            <option value="">— Seleccione —</option>
+                            <option th:each="c : ${categorias}" th:value="${c}" th:text="${categoriaLabels[c.name()]}">Cat</option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{categoria}">Error</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/servicios}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${editId != null} ? 'Guardar cambios' : 'Crear servicio'">Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

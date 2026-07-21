@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    show-sql: false
+
+  flyway:
+    clean-disabled: true
+
+  thymeleaf:
+    cache: true
+
+  # SMTP obligatorio en producción: sin MAIL_HOST los enlaces de
+  # verificación y restablecimiento solo se emitirían por el log
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
+app:
+  security:
+    remember-me-key: ${REMEMBER_ME_KEY}
+
+logging:
+  level:
+    com.hotel.paraiso: INFO
+    org.hibernate.SQL: WARN

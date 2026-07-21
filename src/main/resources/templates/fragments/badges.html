@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Badges de estado con color semántico y etiqueta legible -->
+
+<span th:fragment="reserva(estado)" th:switch="${estado?.name()}">
+    <span th:case="'PENDIENTE'"  class="hp-badge hp-badge-warning">Pendiente</span>
+    <span th:case="'CONFIRMADA'" class="hp-badge hp-badge-info">Confirmada</span>
+    <span th:case="'CHECKIN'"    class="hp-badge hp-badge-primary">Check-in</span>
+    <span th:case="'CHECKOUT'"   class="hp-badge hp-badge-success">Check-out</span>
+    <span th:case="'CANCELADA'"  class="hp-badge hp-badge-danger">Cancelada</span>
+    <span th:case="'NO_SHOW'"    class="hp-badge hp-badge-neutral">No-show</span>
+    <span th:case="*" class="hp-badge hp-badge-neutral" th:text="${estado}">—</span>
+</span>
+
+<span th:fragment="habitacion(estado)" th:switch="${estado?.name()}">
+    <span th:case="'DISPONIBLE'"    class="hp-badge hp-badge-success">Disponible</span>
+    <span th:case="'OCUPADA'"       class="hp-badge hp-badge-primary">Ocupada</span>
+    <span th:case="'MANTENIMIENTO'" class="hp-badge hp-badge-warning">Mantenimiento</span>
+    <span th:case="'BLOQUEADA'"     class="hp-badge hp-badge-danger">Bloqueada</span>
+    <span th:case="*" class="hp-badge hp-badge-neutral" th:text="${estado}">—</span>
+</span>
+
+<span th:fragment="factura(estado)" th:switch="${estado?.name()}">
+    <span th:case="'PENDIENTE'"           class="hp-badge hp-badge-warning">Pendiente</span>
+    <span th:case="'PAGADA_PARCIALMENTE'" class="hp-badge hp-badge-info">Pago parcial</span>
+    <span th:case="'PAGADA'"              class="hp-badge hp-badge-success">Pagada</span>
+    <span th:case="'ANULADA'"             class="hp-badge hp-badge-danger">Anulada</span>
+    <span th:case="*" class="hp-badge hp-badge-neutral" th:text="${estado}">—</span>
+</span>
+
+<span th:fragment="pago(estado)" th:switch="${estado?.name()}">
+    <span th:case="'APROBADO'"    class="hp-badge hp-badge-success">Aprobado</span>
+    <span th:case="'PENDIENTE'"   class="hp-badge hp-badge-warning">Pendiente</span>
+    <span th:case="'RECHAZADO'"   class="hp-badge hp-badge-danger">Rechazado</span>
+    <span th:case="'REEMBOLSADO'" class="hp-badge hp-badge-info">Reembolsado</span>
+    <span th:case="'CANCELADO'"   class="hp-badge hp-badge-neutral">Cancelado</span>
+    <span th:case="*" class="hp-badge hp-badge-neutral" th:text="${estado}">—</span>
+</span>
+
+<span th:fragment="activo(flag)">
+    <span th:if="${flag}" class="hp-badge hp-badge-success">Activo</span>
+    <span th:unless="${flag}" class="hp-badge hp-badge-neutral">Inactivo</span>
+</span>
+
+<span th:fragment="metodoPago(metodo)" th:switch="${metodo?.name()}">
+    <span th:case="'EFECTIVO'"        th:text="Efectivo"></span>
+    <span th:case="'TARJETA_CREDITO'" th:text="'Tarjeta de crédito'"></span>
+    <span th:case="'TARJETA_DEBITO'"  th:text="'Tarjeta de débito'"></span>
+    <span th:case="'TRANSFERENCIA'"   th:text="Transferencia"></span>
+    <span th:case="'PSE'"             th:text="PSE"></span>
+    <span th:case="'NEQUI'"           th:text="Nequi"></span>
+    <span th:case="'DAVIPLATA'"       th:text="Daviplata"></span>
+    <span th:case="*" th:text="${metodo}"></span>
+</span>
+
+<span th:fragment="categoriaServicio(categoria)" th:switch="${categoria?.name()}">
+    <span th:case="'ALIMENTACION'"    th:text="Alimentación"></span>
+    <span th:case="'SPA_BIENESTAR'"   th:text="'Spa y bienestar'"></span>
+    <span th:case="'TRANSPORTE'"      th:text="Transporte"></span>
+    <span th:case="'ENTRETENIMIENTO'" th:text="Entretenimiento"></span>
+    <span th:case="'LAVANDERIA'"      th:text="Lavandería"></span>
+    <span th:case="'NEGOCIOS'"        th:text="Negocios"></span>
+    <span th:case="'OTROS'"           th:text="Otros"></span>
+    <span th:case="*" th:text="${categoria}"></span>
+</span>
+
+</body>
+</html>

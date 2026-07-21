@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Indicador de pasos del flujo público de reservas.
+     paso: 1=Fechas, 2=Habitación, 3=Datos, 4=Confirmación -->
+<div th:fragment="pasos(paso)" class="hp-wizard-steps">
+    <div class="hp-step" th:classappend="${paso > 1} ? 'hecho' : 'activo'">
+        <span class="hp-step-num"><i th:if="${paso > 1}" class="bi bi-check-lg"></i><th:block th:unless="${paso > 1}">1</th:block></span>
+        <span class="hp-step-etiqueta">Fechas</span>
+    </div>
+    <span class="hp-step-sep"></span>
+    <div class="hp-step" th:classappend="${paso > 2} ? 'hecho' : (${paso == 2} ? 'activo' : '')">
+        <span class="hp-step-num"><i th:if="${paso > 2}" class="bi bi-check-lg"></i><th:block th:unless="${paso > 2}">2</th:block></span>
+        <span class="hp-step-etiqueta">Habitación</span>
+    </div>
+    <span class="hp-step-sep"></span>
+    <div class="hp-step" th:classappend="${paso > 3} ? 'hecho' : (${paso == 3} ? 'activo' : '')">
+        <span class="hp-step-num"><i th:if="${paso > 3}" class="bi bi-check-lg"></i><th:block th:unless="${paso > 3}">3</th:block></span>
+        <span class="hp-step-etiqueta">Tus datos</span>
+    </div>
+    <span class="hp-step-sep"></span>
+    <div class="hp-step" th:classappend="${paso == 4} ? 'activo' : ''">
+        <span class="hp-step-num">4</span>
+        <span class="hp-step-etiqueta">Confirmación</span>
+    </div>
+</div>
+</body>
+</html>

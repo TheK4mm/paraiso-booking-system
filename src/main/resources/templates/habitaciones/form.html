@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/habitaciones}">Habitaciones</a></li>
+            <li class="breadcrumb-item active" th:text="${editId != null} ? 'Editar' : 'Nueva'">Nueva</li>
+        </ol>
+    </nav>
+
+    <div class="hp-page-header">
+        <h1 class="hp-page-title" th:text="${editId != null} ? 'Editar habitación' : 'Nueva habitación'">Habitación</h1>
+    </div>
+
+    <div class="card" style="max-width: 720px;">
+        <div class="card-body p-4">
+            <form th:action="${editId != null} ? @{/habitaciones/{id}(id=${editId})} : @{/habitaciones}"
+                  th:object="${request}" method="post" novalidate>
+                <div class="row">
+                    <div class="col-md-6" th:insert="~{fragments/campos :: entrada('numero', 'Número', 'text', true)}"></div>
+                    <div class="col-md-6" th:insert="~{fragments/campos :: numero('piso', 'Piso', true, '1')}"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="tipoHabitacionId" class="form-label">Tipo de habitación <span class="hp-required">*</span></label>
+                    <select th:field="*{tipoHabitacionId}" class="form-select"
+                            th:classappend="${#fields.hasErrors('tipoHabitacionId')} ? 'is-invalid'">
+                        <option value="">— Seleccione —</option>
+                        <option th:each="t : ${tipos}" th:value="${t.id}"
+                                th:text="|${t.nombre} · ${#numbers.formatDecimal(t.precioBaseNoche, 0, 'POINT', 0, 'COMMA')} COP/noche|">Tipo</option>
+                    </select>
+                    <div class="invalid-feedback" th:errors="*{tipoHabitacionId}">Error</div>
+                </div>
+                <div class="mb-3">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select th:field="*{estado}" class="form-select">
+                        <option th:each="e : ${estados}" th:value="${e}"
+                                th:text="${e.name() == 'DISPONIBLE'} ? 'Disponible' :
+                                         (${e.name() == 'OCUPADA'} ? 'Ocupada' :
+                                         (${e.name() == 'MANTENIMIENTO'} ? 'Mantenimiento' : 'Bloqueada'))">Estado</option>
+                    </select>
+                </div>
+                <div th:insert="~{fragments/campos :: areaTexto('descripcion', 'Descripción', false)}"></div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a th:href="@{/habitaciones}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${editId != null} ? 'Guardar cambios' : 'Crear habitación'">Guardar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

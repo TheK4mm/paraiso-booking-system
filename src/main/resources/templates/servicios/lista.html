@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/app}">
+<body>
+<section layout:fragment="content">
+
+    <div class="hp-page-header">
+        <div>
+            <h1 class="hp-page-title">Servicios</h1>
+            <p class="hp-page-sub">Servicios adicionales disponibles para las reservas</p>
+        </div>
+        <a th:href="@{/servicios/new}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo servicio
+        </a>
+    </div>
+
+    <form class="hp-filters" method="get" th:action="@{/servicios}">
+        <div class="hp-search">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" th:value="${q}" class="form-control" placeholder="Buscar servicio…">
+        </div>
+        <select name="categoria" class="form-select" onchange="this.form.submit()">
+            <option value="">Todas las categorías</option>
+            <option th:each="c : ${categorias}" th:value="${c}" th:selected="${c == categoria}"
+                    th:text="${categoriaLabels[c.name()]}">Categoría</option>
+        </select>
+        <div class="form-check" sec:authorize="hasRole('ADMIN')">
+            <input class="form-check-input" type="checkbox" name="incluirInactivos" value="true"
+                   id="incluirInactivos" th:checked="${incluirInactivos}" onchange="this.form.submit()">
+            <label class="form-check-label small" for="incluirInactivos">Incluir inactivos</label>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        <a th:href="@{/servicios}" class="btn btn-link btn-sm text-muted">Limpiar</a>
+        <a th:href="${'/servicios/export.csv' + queryBase}" class="btn btn-outline-secondary ms-auto">
+            <i class="bi bi-download me-1"></i> CSV
+        </a>
+    </form>
+
+    <div class="card">
+        <div th:if="${page.totalElements == 0}"
+             th:replace="~{fragments/estados :: vacio('bi-stars', 'Sin servicios',
+                          'Registra los servicios adicionales que ofrece el hotel.',
+                          '/servicios/new', 'Nuevo servicio')}"></div>
+
+        <div class="table-responsive" th:if="${page.totalElements > 0}">
+            <table class="table hp-table align-middle">
+                <thead>
+                <tr>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'nombre', 'Servicio')}"></th>
+                    <th>Descripción</th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'categoria', 'Categoría')}"></th>
+                    <th th:replace="~{fragments/tabla :: th(${page}, 'precio', 'Precio')}"></th>
+                    <th>Estado</th>
+                    <th class="text-end" sec:authorize="hasRole('ADMIN')">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${page.content}">
+                    <td><a th:href="@{/servicios/{id}/edit(id=${s.id})}" class="hp-row-link" th:text="${s.nombre}">Nombre</a></td>
+                    <td class="text-muted small" style="max-width: 340px;" th:text="${s.descripcion} ?: '—'">desc</td>
+                    <td><span class="hp-badge hp-badge-neutral" th:text="${categoriaLabels[s.categoria.name()]}">Categoría</span></td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(s.precio, 0, 'POINT', 0, 'COMMA')} + ' COP'">precio</td>
+                    <td><span th:replace="~{fragments/badges :: activo(${s.activo})}"></span></td>
+                    <td class="text-end" sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/servicios/{id}/edit(id=${s.id})}"
+                           class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <form th:action="@{/servicios/{id}/delete(id=${s.id})}" method="post" class="d-inline"
+                              th:data-hp-confirm="|¿Desactivar el servicio ${s.nombre}?|" th:if="${s.activo}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav th:replace="~{fragments/tabla :: paginacion(${page})}"></nav>
+        <div th:replace="~{fragments/tabla :: total(${page})}"></div>
+    </div>
+
+</section>
+</body>
+</html>
