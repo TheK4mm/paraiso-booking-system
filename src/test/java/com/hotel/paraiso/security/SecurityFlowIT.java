@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -12,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,10 +44,10 @@ class SecurityFlowIT {
     private MockMvc mockMvc;
 
     @Test
-    void elNavegadorAnonimoEsRedirigidoALogin() throws Exception {
+    void elNavegadorAnonimoEsRedirigidoAlPortal() throws Exception {
         mockMvc.perform(get("/reservas").accept("text/html"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                .andExpect(redirectedUrl("/?auth=login"));
     }
 
     @Test
@@ -53,10 +56,19 @@ class SecurityFlowIT {
                 .andExpect(status().isUnauthorized());
     }
 
+    /** El módulo de autenticación aislado ya no existe: solo redirige al portal. */
     @Test
-    void elLoginEsPublico() throws Exception {
-        mockMvc.perform(get("/login")).andExpect(status().isOk());
-        mockMvc.perform(get("/registro")).andExpect(status().isOk());
+    void lasRutasDeAuthRedirigenAlModalDelPortal() throws Exception {
+        mockMvc.perform(get("/login")).andExpect(redirectedUrl("/?auth=login"));
+        mockMvc.perform(get("/registro")).andExpect(redirectedUrl("/?auth=registro"));
+        mockMvc.perform(get("/recuperar")).andExpect(redirectedUrl("/?auth=recuperar"));
+    }
+
+    @Test
+    void elPortalAbreElModalConElParametroAuth() throws Exception {
+        mockMvc.perform(get("/").param("auth", "login").accept("text/html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("hpAuthModal")));
     }
 
     @Test
@@ -150,11 +162,161 @@ class SecurityFlowIT {
     }
 
     @Test
-    void elLoginClasicoInvalidoConservaLaRedireccionHistorica() throws Exception {
+    void elLoginClasicoInvalidoVuelveAlPortalConElModalAbierto() throws Exception {
         mockMvc.perform(post("/login").with(csrf())
                         .param("username", "noexiste").param("password", "mal"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login?error"));
+                .andExpect(redirectedUrl("/?auth=login&error"));
+    }
+
+    // ─── Cierre de sesión: los tres roles vuelven al portal ───
+    // Accept: text/html es obligatorio — Spring Security negocia el logout y
+    // responde 204 sin redirección a un cliente que no pide HTML.
+
+    @Test
+    @WithMockUser(username = "cliente@example.com", roles = "CLIENTE")
+    void elClienteCierraSesionHaciaElPortal() throws Exception {
+        mockMvc.perform(post("/logout").with(csrf()).accept(MediaType.TEXT_HTML))
+                .andExpect(redirectedUrl("/?logout"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void elAdminCierraSesionHaciaElPortal() throws Exception {
+        mockMvc.perform(post("/logout").with(csrf()).accept(MediaType.TEXT_HTML))
+                .andExpect(redirectedUrl("/?logout"));
+    }
+
+    @Test
+    @WithMockUser(username = "recepcion", roles = "RECEPCIONISTA")
+    void elRecepcionistaCierraSesionHaciaElPortal() throws Exception {
+        mockMvc.perform(post("/logout").with(csrf()).accept(MediaType.TEXT_HTML))
+                .andExpect(redirectedUrl("/?logout"));
+    }
+
+    // ─── Regresión: 403 tras iniciar sesión como CLIENTE ───
+
+    /**
+     * Una URL de back-office pedida mientras el visitante era anónimo queda
+     * en el RequestCache; honrarla tras un login de CLIENTE lo mandaba a una
+     * zona prohibida y producía un 403 justo después de autenticarse.
+     */
+    @Test
+    void elClienteNoEsArrastradoAlDestinoGuardadoDeOtroRol() throws Exception {
+        String email = registrarClienteNuevo();
+
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(get("/dashboard").accept("text/html").session(sesion))
+                .andExpect(redirectedUrl("/?auth=login"));
+
+        // Aterriza en su zona, NO en el /dashboard que quedó cacheado
+        mockMvc.perform(post("/login").with(csrf()).session(sesion)
+                        .param("username", email).param("password", CLAVE))
+                .andExpect(redirectedUrl("/mi-cuenta"));
+        mockMvc.perform(get("/mi-cuenta").session(sesion)).andExpect(status().isOk());
+    }
+
+    /** En el modal, un destino descartado deja al huésped donde estaba. */
+    @Test
+    void elLoginAjaxDelClienteIgnoraElDestinoDeOtroRol() throws Exception {
+        String email = registrarClienteNuevo();
+
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(get("/dashboard").accept("text/html").session(sesion));
+
+        mockMvc.perform(post("/login").with(csrf()).session(sesion)
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("username", email).param("password", CLAVE))
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"redirect\":null}"));
+    }
+
+    /** El personal sí conserva su destino interceptado. */
+    @Test
+    void elPersonalConservaElDestinoGuardado() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(get("/actividad").accept("text/html").session(sesion))
+                .andExpect(redirectedUrl("/?auth=login"));
+
+        // Spring Security añade ?continue al reanudar el destino guardado
+        mockMvc.perform(post("/login").with(csrf()).session(sesion)
+                        .param("username", "admin").param("password", "admin123"))
+                .andExpect(redirectedUrlPattern("**/actividad*"));
+    }
+
+    /** Peticiones que el navegador emite solo no deben ensuciar el cache. */
+    @Test
+    void lasPeticionesNoNavegablesNoSeGuardanComoDestino() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(get("/reservas").accept("application/json")
+                .header("X-Requested-With", "XMLHttpRequest").session(sesion));
+
+        mockMvc.perform(post("/login").with(csrf()).session(sesion)
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("username", "admin").param("password", "admin123"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"redirect\":null}"));
+    }
+
+    // ─── Registro: la cuenta nace activa y entra de inmediato ───
+
+    @Test
+    void elClienteRecienRegistradoIniciaSesionSinVerificarElEmail() throws Exception {
+        String email = registrarClienteNuevo();
+
+        mockMvc.perform(post("/login").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("username", email).param("password", CLAVE))
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"redirect\":null}"));
+    }
+
+    @Test
+    void elClienteRecienRegistradoEntraASuCuenta() throws Exception {
+        String email = registrarClienteNuevo();
+
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(post("/login").with(csrf()).session(sesion)
+                        .param("username", email).param("password", CLAVE))
+                .andExpect(redirectedUrl("/mi-cuenta"));
+        // Sin 403: la ficha se creó y vinculó en el propio registro
+        mockMvc.perform(get("/mi-cuenta").session(sesion)).andExpect(status().isOk());
+    }
+
+    private static final String CLAVE = "clave-segura";
+
+    /** Registra un CLIENTE por el flujo público y devuelve su email. */
+    private String registrarClienteNuevo() throws Exception {
+        long unico = System.nanoTime();
+        String email = "huesped-" + unico + "@example.com";
+        mockMvc.perform(post("/registro").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("nombre", "Nuevo").param("apellido", "Huésped")
+                        .param("tipoDocumento", "CC")
+                        .param("numeroDocumento", String.valueOf(unico))
+                        .param("email", email).param("telefono", "3001112233")
+                        .param("password", CLAVE).param("confirmarPassword", CLAVE))
+                .andExpect(status().isOk())
+                .andExpect(view().name("fragments/auth :: registroExito"));
+        return email;
+    }
+
+    @Test
+    void laRecuperacionAjaxConErroresDevuelveSuPaneDelModal() throws Exception {
+        mockMvc.perform(post("/recuperar").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("email", "no-es-un-email"))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(view().name("fragments/auth :: recuperarPane"));
+    }
+
+    @Test
+    void laRecuperacionAjaxValidaDevuelveElMensajeGenerico() throws Exception {
+        mockMvc.perform(post("/recuperar").with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("email", "no-existe@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("fragments/auth :: recuperarExito"));
     }
 
     @Test
