@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,9 @@ import java.util.Map;
  * Destino tras el login según el contexto:
  * 1. Una reserva a medias tiene prioridad: el huésped que inició sesión
  *    en mitad del proceso vuelve directo al paso de datos.
- * 2. Si Spring Security interceptó una URL protegida, se respeta.
+ * 2. Si Spring Security interceptó una URL protegida, se respeta —
+ *    siempre que el rol autenticado pueda alcanzarla (ver
+ *    {@link DestinoPorRol}).
  * 3. Sin destino explícito: en el login clásico cada rol aterriza en su
  *    zona (CLIENTE en su cuenta, el personal en el panel); en el login
  *    AJAX del modal del portal se responde {"redirect": null} y el JS
@@ -39,8 +40,8 @@ public class RolAuthenticationSuccessHandler implements AuthenticationSuccessHan
     public static final String SESION_RESERVA_EN_CURSO = "reservaEnCurso";
 
     private final ObjectMapper objectMapper;
+    private final RequestCache requestCache;
 
-    private final RequestCache requestCache = new HttpSessionRequestCache();
     private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 
     @Override
@@ -58,7 +59,7 @@ public class RolAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         if (destino == null) {
-            destino = tieneRol(authentication, "ROLE_CLIENTE") ? "/mi-cuenta" : "/dashboard";
+            destino = DestinoPorRol.porDefecto(authentication);
         }
         redirectStrategy.sendRedirect(request, response, destino);
     }
@@ -67,22 +68,29 @@ public class RolAuthenticationSuccessHandler implements AuthenticationSuccessHan
     private String resolverDestinoExplicito(HttpServletRequest request, HttpServletResponse response,
                                             Authentication authentication) {
         HttpSession session = request.getSession(false);
-        if (tieneRol(authentication, "ROLE_CLIENTE")
+        if (esCliente(authentication)
                 && session != null && session.getAttribute(SESION_RESERVA_EN_CURSO) != null) {
             requestCache.removeRequest(request, response);
             return "/reservar/datos";
         }
 
         SavedRequest saved = requestCache.getRequest(request, response);
-        if (saved != null) {
-            requestCache.removeRequest(request, response);
-            return saved.getRedirectUrl();
+        if (saved == null) {
+            return null;
         }
-        return null;
+        requestCache.removeRequest(request, response);
+
+        // Un destino fuera de la zona del rol daría un 403 inmediatamente
+        // después de un login correcto: se descarta y manda el destino por
+        // defecto. Pasa sobre todo con el CLIENTE, cuyo navegador pudo
+        // pedir antes una URL de back-office.
+        String url = saved.getRedirectUrl();
+        String path = DestinoPorRol.pathDe(url, request.getContextPath());
+        return path != null && DestinoPorRol.alcanzable(authentication, path) ? url : null;
     }
 
-    private boolean tieneRol(Authentication authentication, String authority) {
+    private boolean esCliente(Authentication authentication) {
         return authentication.getAuthorities().stream()
-                .anyMatch(a -> authority.equals(a.getAuthority()));
+                .anyMatch(a -> "ROLE_CLIENTE".equals(a.getAuthority()));
     }
 }

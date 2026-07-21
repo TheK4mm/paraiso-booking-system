@@ -9,9 +9,6 @@ import java.time.LocalDateTime;
 /**
  * Token de verificación de email para cuentas CLIENTE. Se persiste solo
  * el hash SHA-256; el valor en claro viaja únicamente en el enlace.
- * Lleva además el payload de la ficha de cliente pendiente: la entidad
- * Cliente se crea solo tras verificar, así que sus datos obligatorios
- * deben sobrevivir entre el registro y la verificación.
  */
 @Entity
 @Table(name = "tokens_verificacion_email")
@@ -43,23 +40,6 @@ public class TokenVerificacionEmail {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
-
-    // ─── Payload de la ficha de cliente pendiente ───
-
-    @Column(name = "nombre", nullable = false, length = 100)
-    private String nombre;
-
-    @Column(name = "apellido", nullable = false, length = 100)
-    private String apellido;
-
-    @Column(name = "tipo_documento", nullable = false, length = 20)
-    private String tipoDocumento;
-
-    @Column(name = "numero_documento", nullable = false, length = 30)
-    private String numeroDocumento;
-
-    @Column(name = "telefono", length = 20)
-    private String telefono;
 
     public boolean estaVigente() {
         return usadoEn == null && expiraEn.isAfter(LocalDateTime.now());

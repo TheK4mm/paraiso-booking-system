@@ -25,7 +25,9 @@ public class HotelUserDetailsService implements UserDetailsService {
                 .username(usuario.getUsername())
                 .password(usuario.getPasswordHash())
                 .roles(usuario.getRol().name())
-                .disabled(!usuario.getActivo() || !usuario.getEmailVerificado())
+                // Solo la sanción administrativa deshabilita la cuenta: la
+                // verificación del email es opcional y no bloquea el acceso
+                .disabled(!usuario.getActivo())
                 .build();
     }
 }

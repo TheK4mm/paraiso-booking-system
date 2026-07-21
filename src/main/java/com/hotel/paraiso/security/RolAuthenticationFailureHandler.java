@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
@@ -19,9 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 /**
- * Fallo de login: el POST clásico conserva la redirección histórica a
- * /login?error; el login AJAX del modal del portal recibe 401 con un
- * mensaje para mostrar dentro del propio modal.
+ * Fallo de login: el login AJAX del modal recibe 401 con un mensaje para
+ * mostrar dentro del propio modal; el POST clásico (sin JavaScript) vuelve
+ * al portal con el modal abierto y el error visible.
  */
 @Component
 @RequiredArgsConstructor
@@ -30,7 +29,7 @@ public class RolAuthenticationFailureHandler implements AuthenticationFailureHan
     private final ObjectMapper objectMapper;
 
     private final AuthenticationFailureHandler porDefecto =
-            new SimpleUrlAuthenticationFailureHandler("/login?error");
+            new SimpleUrlAuthenticationFailureHandler(RutasAuth.PORTAL_LOGIN + "&error");
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
@@ -48,10 +47,7 @@ public class RolAuthenticationFailureHandler implements AuthenticationFailureHan
 
     private String mensajeDe(AuthenticationException exception) {
         if (exception instanceof DisabledException) {
-            return "Tu cuenta aún no está activa: verifica tu email o contacta al hotel.";
-        }
-        if (exception instanceof LockedException) {
-            return "Tu cuenta está bloqueada. Contacta al hotel.";
+            return "Tu cuenta está desactivada. Contacta al hotel.";
         }
         return "Usuario o contraseña incorrectos.";
     }

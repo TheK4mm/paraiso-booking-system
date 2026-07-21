@@ -39,7 +39,11 @@ public class CuentaClienteService {
     private final ReservaService reservaService;
     private final ApplicationEventPublisher eventPublisher;
 
-    /** Ficha vinculada a la cuenta; vacío si la verificación quedó a medias. */
+    /**
+     * Ficha vinculada a la cuenta. Vacío cuando el email ya tenía ficha al
+     * registrarse: esa vinculación solo ocurre tras verificar el email,
+     * para no exponer el historial de un correo que no se controla.
+     */
     public Optional<Cliente> clienteDe(String username) {
         // Fetch-join: la ficha se usa fuera de esta transacción (vistas)
         return usuarioRepository.findConClienteByUsernameIgnoreCase(username)
@@ -82,7 +86,8 @@ public class CuentaClienteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", username));
         Cliente cliente = usuario.getCliente();
         if (cliente == null) {
-            throw new BusinessException("Tu cuenta aún no tiene ficha de cliente vinculada. Contacta a recepción.");
+            throw new BusinessException(
+                    "Verifica tu email para vincular tu ficha de cliente y poder editar tus datos.");
         }
         cliente.setNombre(request.getNombre());
         cliente.setApellido(request.getApellido());
