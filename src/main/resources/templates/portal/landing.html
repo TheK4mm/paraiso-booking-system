@@ -8,18 +8,110 @@
 <body>
 <section layout:fragment="content">
 
-    <!-- ─── Hero + búsqueda ─────────────────────────────────────────── -->
-    <header class="hp-hero hp-hero--foto"
-            th:style="'--hp-hero-img: url(' + @{/img/hero-hotel.jpg} + ')'">
-        <div class="container">
-            <div class="hp-hero-eyebrow">Bogotá · Colombia</div>
-            <h1 class="hp-hero-title">Tu descanso empieza en el Hotel Paraíso</h1>
-            <p class="hp-hero-sub">
-                Habitaciones elegantes, atención cercana y la mejor ubicación de la
-                ciudad. Consulta la disponibilidad y reserva en menos de un minuto —
-                sin registros obligatorios ni pagos por adelantado.
-            </p>
+    <!-- ─── Hero: carrusel de bienvenida + búsqueda ─────────────────────
+         La barra de búsqueda va FUERA del carrusel a propósito: es un único
+         formulario (ids y th:field no pueden duplicarse por diapositiva) y así
+         no se mueve mientras cambian las imágenes. -->
+    <header class="hp-hero hp-hero--carrusel">
+        <div id="hpHeroCarrusel" class="carousel slide carousel-fade hp-hero-carrusel"
+             data-bs-ride="carousel" data-bs-interval="6500"
+             role="region" aria-roledescription="carrusel"
+             aria-label="Imágenes del Hotel Paraíso">
 
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#hpHeroCarrusel" data-bs-slide-to="0"
+                        class="active" aria-current="true" aria-label="Bienvenida"></button>
+                <button type="button" data-bs-target="#hpHeroCarrusel" data-bs-slide-to="1"
+                        aria-label="Piscina y spa"></button>
+                <button type="button" data-bs-target="#hpHeroCarrusel" data-bs-slide-to="2"
+                        aria-label="Restaurante"></button>
+                <button type="button" data-bs-target="#hpHeroCarrusel" data-bs-slide-to="3"
+                        aria-label="Habitaciones"></button>
+            </div>
+
+            <div class="carousel-inner">
+                <!-- Solo la primera imagen es prioritaria (es la que entra en el LCP);
+                     las demás se descargan en segundo plano con prioridad baja. -->
+                <div class="carousel-item active">
+                    <div class="hp-hero-slide">
+                        <img class="hp-hero-slide-img" th:src="@{/img/hero-hotel.jpg}"
+                             alt="Fachada del Hotel Paraíso" fetchpriority="high" decoding="async">
+                        <div class="hp-hero-caption">
+                            <div class="container">
+                                <div class="hp-hero-eyebrow">Bogotá · Colombia</div>
+                                <h1 class="hp-hero-title">Tu descanso empieza en el Hotel Paraíso</h1>
+                                <p class="hp-hero-sub">
+                                    Habitaciones elegantes, atención cercana y la mejor ubicación de la
+                                    ciudad. Consulta la disponibilidad y reserva en menos de un minuto —
+                                    sin registros obligatorios ni pagos por adelantado.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="hp-hero-slide">
+                        <img class="hp-hero-slide-img" th:src="@{/img/galeria/piscina.jpg}"
+                             alt="Piscina del Hotel Paraíso" fetchpriority="low" decoding="async">
+                        <div class="hp-hero-caption">
+                            <div class="container">
+                                <div class="hp-hero-eyebrow">Bienestar</div>
+                                <h2 class="hp-hero-title">Un paraíso a un paso del centro</h2>
+                                <p class="hp-hero-sub">
+                                    Piscina climatizada, zona húmeda y spa para desconectar del ritmo
+                                    de la ciudad sin salir del hotel.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="hp-hero-slide">
+                        <img class="hp-hero-slide-img" th:src="@{/img/galeria/restaurante.jpg}"
+                             alt="Restaurante del Hotel Paraíso" fetchpriority="low" decoding="async">
+                        <div class="hp-hero-caption">
+                            <div class="container">
+                                <div class="hp-hero-eyebrow">Gastronomía</div>
+                                <h2 class="hp-hero-title">Sabores que se quedan en la memoria</h2>
+                                <p class="hp-hero-sub">
+                                    Cocina local e internacional, desayuno servido cada mañana y
+                                    room service las 24 horas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="hp-hero-slide">
+                        <img class="hp-hero-slide-img" th:src="@{/img/tipos/junior-suite.jpg}"
+                             alt="Junior Suite del Hotel Paraíso" fetchpriority="low" decoding="async">
+                        <div class="hp-hero-caption">
+                            <div class="container">
+                                <div class="hp-hero-eyebrow">Habitaciones</div>
+                                <h2 class="hp-hero-title">Descansa como te mereces</h2>
+                                <p class="hp-hero-sub">
+                                    Desde individuales acogedoras hasta suites con jacuzzi y vista a
+                                    la ciudad. Todas con wifi, desayuno y atención 24 horas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="carousel-control-prev" type="button"
+                    data-bs-target="#hpHeroCarrusel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button"
+                    data-bs-target="#hpHeroCarrusel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+
+        <div class="container">
             <div class="hp-search-bar" style="max-width: 860px;">
                 <form th:action="@{/reservar/disponibilidad}" th:object="${busqueda}" method="get">
                     <div class="row g-3 align-items-end">
