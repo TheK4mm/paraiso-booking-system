@@ -1,6 +1,6 @@
 # Hotel Paraíso — Plataforma Hotelera · v2.1
 
-Aplicación **full-stack profesional** para la operación de un hotel: **portal público de reservas para huéspedes** (landing page, disponibilidad en línea, reserva como invitado o con cuenta) + back-office completo con reservas con máquina de estados, facturación con IVA, pagos parciales, calendario de ocupación, dashboard con métricas y control de acceso por roles.
+Aplicación **full-stack** para la operación de un hotel: **portal público de reservas para huéspedes** (landing page, disponibilidad en línea, reserva como invitado o con cuenta) + back-office completo con reservas con máquina de estados, facturación con IVA, pagos parciales, calendario de ocupación, dashboard con métricas y control de acceso por roles.
 
 **Stack:** Java 17 · Spring Boot 4.1 (Framework 7, Security 7, Jackson 3) · Spring Data JPA · Flyway 12 · PostgreSQL 16+ · Thymeleaf · Bootstrap 5 (vendorizado) · Chart.js · MapStruct · Lombok · Testcontainers.
 
@@ -13,8 +13,8 @@ Aplicación **full-stack profesional** para la operación de un hotel: **portal 
 - **Flujo de reservas sin registro** (`/reservar`): fechas → disponibilidad real (excluye solapes bajo la misma regla que el back-office) → tarjetas con foto/precio/total de estancia → datos del huésped → código de confirmación. El invitado queda registrado como cliente por su email (get-or-create, sin duplicados).
 - **Consulta de reserva por código + email** (`/consulta-reserva`), con mensaje único anti-enumeración.
 - **Rol `CLIENTE` con portal propio** (`/mi-cuenta`): resumen, historial, detalle con saldos, cancelación (solo PENDIENTE/CONFIRMADA) y edición de perfil. Los clientes inician sesión con su **email**.
-- **Login y registro en modal sobre el portal**: iniciar sesión o crear cuenta abre un modal (fondo desenfocado, login ⇄ registro sin salir) sobre la página actual — sin cambio de página; los errores y el éxito se muestran dentro del propio modal y, tras entrar, el visitante permanece donde estaba. Las páginas `/login` y `/registro` clásicas siguen existiendo como fallback (personal y navegación sin JS).
-- **Registro con verificación de email**: la cuenta no puede entrar y la ficha de cliente solo se crea/vincula tras abrir el enlace de un solo uso (24 h; por log al no haber SMTP). Nadie ve el historial de un email que no controla.
+- **Login, registro y recuperación en un modal sobre el portal**: iniciar sesión, crear cuenta o recuperar la contraseña abre un modal (fondo desenfocado, login ⇄ registro ⇄ recuperación sin salir) sobre la página actual — sin cambio de página; los errores y el éxito se muestran dentro del propio modal y, tras entrar, el visitante permanece donde estaba. **No hay páginas de autenticación independientes**: `/login`, `/registro` y `/recuperar` son redirecciones al portal con el modal ya abierto (`/?auth=login|registro|recuperar`).
+- **Registro con verificación de email opcional**: la cuenta de cliente nace activa y puede entrar de inmediato. Si el email no tenía ficha, esta se crea y vincula en el propio registro; si el email ya tenía ficha (un huésped que reservó sin cuenta), la cuenta queda activa pero **sin vincular** hasta verificar el email — así, registrar el correo de otra persona nunca expone su documento ni sus reservas. El enlace de verificación es de un solo uso (24 h) y se envía por correo real si hay SMTP configurado, o por log en su defecto.
 - **Tres zonas de seguridad**: pública / cliente (`/mi-cuenta/**`) / back-office (todo lo demás, default-cerrado con `anyRequest().hasAnyRole("ADMIN","RECEPCIONISTA")`). La API `/api/**` es exclusiva del personal.
 
 ### Operación
@@ -27,7 +27,7 @@ Aplicación **full-stack profesional** para la operación de un hotel: **portal 
 - **Dashboard** con KPIs del día (ocupación, llegadas, salidas, ingresos del mes, facturas por cobrar) y gráficos de 12 meses (Chart.js con datos inline, sin fetch).
 
 ### Plataforma
-- **Autenticación** con Spring Security: login con sesiones, remember-me, registro público y recuperación de contraseña por token de un solo uso (30 min; el enlace se emite por log al no haber SMTP).
+- **Autenticación** con Spring Security: login con sesiones, remember-me, registro público y recuperación de contraseña por token de un solo uso (30 min). Los correos transaccionales (verificación y recuperación) se envían por SMTP real cuando se configura `MAIL_HOST`, o se emiten por log en desarrollo (`common/email/EmailSender` con implementaciones `SmtpEmailSender`/`LogEmailSender`).
 - **Roles** `ADMIN` y `RECEPCIONISTA` con autorización por rutas y a nivel de método (`@PreAuthorize`).
 - **CSRF activo** en todos los formularios; la API REST usa HTTP Basic y responde 401/`ProblemDetail` JSON.
 - **Registro de actividad** (`activity_log`): reservas, transiciones, pagos, facturas, usuarios y accesos — persistido solo si la transacción confirma (`@TransactionalEventListener AFTER_COMMIT`).
@@ -35,6 +35,42 @@ Aplicación **full-stack profesional** para la operación de un hotel: **portal 
 - **Listados** con búsqueda, filtros combinables (Specifications), ordenamiento con lista blanca, paginación y **exportación CSV** que respeta los filtros vigentes.
 - **Esquema versionado con Flyway** (única fuente de verdad; `ddl-auto=validate`).
 - **UI tipo SaaS** con design system propio, assets 100 % locales (sin CDN), validación visual por campo, estados vacíos, modales de confirmación y toasts.
+
+---
+
+## Capturas de pantalla
+
+### Portal público (huéspedes)
+
+**Landing** — hero, buscador de disponibilidad y catálogo de habitaciones con foto y comodidades.
+
+![Landing del portal público](docs/screenshots/portal-landing.png)
+
+**Ubicación y llamada a la acción** — sección de ubicación y footer del portal.
+
+![Ubicación y CTA del portal](docs/screenshots/portal-ubicacion.png)
+
+**Inicio de sesión en modal** — login/registro sobre la página actual, sin cambio de página.
+
+![Modal de autenticación del portal](docs/screenshots/portal-login.png)
+
+**Reserva sin registro** — paso «Elige tu habitación» del wizard, con disponibilidad real y total de estancia.
+
+![Wizard de reserva: disponibilidad](docs/screenshots/portal-reserva.png)
+
+### Back-office (operación)
+
+**Dashboard** — KPIs del día e ingresos/reservas de los últimos 12 meses (Chart.js con datos inline).
+
+![Dashboard del back-office](docs/screenshots/dashboard.png)
+
+**Calendario de ocupación** — ocupación por noche con chips por estado y navegación por mes.
+
+![Calendario de ocupación](docs/screenshots/calendario.png)
+
+**Detalle de reserva** — estancia, titular, importes, habitaciones, pagos y factura vinculada.
+
+![Detalle de reserva](docs/screenshots/reserva-detalle.png)
 
 ---
 
@@ -150,9 +186,11 @@ mvn test         # unitarias (Mockito): máquina de estados, precios, saldos, IV
 mvn verify       # + integración con Testcontainers (requiere Docker; se omiten sin él)
 ```
 
-- `ReservaServiceTest`, `PagoServiceTest`, `FacturaServiceTest`: reglas de negocio puras.
-- `ReservaRepositoryIT`: solapamiento de fechas y secuencias contra PostgreSQL real.
-- `SecurityFlowIT`: redirecciones, 401 de API, separación de roles y CSRF con MockMvc.
+- `ReservaServiceTest`, `PagoServiceTest`, `FacturaServiceTest`: reglas de negocio puras (máquina de estados, saldos, IVA, descuentos).
+- `ReservaPublicaServiceTest`, `CuentaClienteServiceTest`: reserva pública sin registro y área del huésped (`/mi-cuenta`).
+- `RegistroClienteServiceTest`, `VerificacionEmailServiceTest`: registro con verificación opcional y vinculación diferida de la ficha de cliente.
+- `ReservaRepositoryIT`: solapamiento de fechas y secuencias contra PostgreSQL real (Testcontainers).
+- `SecurityFlowIT`: redirecciones al modal de auth, 401 de la API, separación de zonas por rol y CSRF (MockMvc).
 
 ---
 
@@ -164,4 +202,5 @@ Migraciones en `src/main/resources/db/migration`:
 - `V2__seguridad_auditoria.sql` — `usuarios`, `password_reset_tokens`, `activity_log`.
 - `V3__seed_admin.sql` — usuario administrador inicial (hash bcrypt vía `pgcrypto`).
 - `V4__portal_publico.sql` — rol `CLIENTE`, vínculo `usuarios.cliente_id`, verificación de email (`tokens_verificacion_email` con payload de la ficha pendiente), `imagen`/`comodidades` en tipos de habitación.
+- `V5__verificacion_email_opcional.sql` — la verificación de email pasa a ser **opcional**: las cuentas de cliente nacen activas y la ficha se crea en el registro, así que el token deja de diferir su carga — elimina de `tokens_verificacion_email` las columnas de payload que introdujo V4 (`nombre`, `apellido`, `tipo_documento`, `numero_documento`, `telefono`).
 - `db/seed-dev/V1000__datos_demo.sql`, `V1001__usuarios_demo.sql`, `V1002__portal_demo.sql` — datos de demostración (solo perfil `dev`; fuera del árbol `db/migration` para que prod nunca los aplique). En dev `flyway.out-of-order=true`: las migraciones reales nuevas (V5…) siempre quedan "detrás" de los seeds V1000+.
