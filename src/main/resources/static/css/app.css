@@ -138,7 +138,25 @@ body {
     z-index: 1020;
 }
 
-.hp-topbar .btn-toggle-sidebar { display: none; }
+.hp-topbar .btn-toggle-sidebar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    padding: 0;
+    line-height: 1;
+    color: var(--hp-text-muted);
+    border-color: var(--hp-border);
+}
+
+.hp-topbar .btn-toggle-sidebar i { font-size: 1.15rem; }
+
+.hp-topbar .btn-toggle-sidebar:hover {
+    background: var(--hp-primary-soft);
+    border-color: var(--hp-primary-soft);
+    color: var(--hp-primary);
+}
 
 .hp-user-chip {
     display: flex;
@@ -165,6 +183,29 @@ body {
 }
 
 .hp-content { padding: 1.5rem; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+/* ─── Menú lateral colapsable ──────────────────────────────────────────
+   El estado vive en <html class="hp-sidebar-oculto"> (lo restaura un script
+   en línea antes del primer pintado, ver layout/app.html), de modo que se
+   conserva al navegar por el panel y no hay parpadeo al cargar.
+   Solo aplica en escritorio: por debajo de 992px el mismo botón sigue
+   abriendo el menú como panel deslizante (ver "Responsive"). */
+
+.hp-sidebar { transition: margin-left .28s cubic-bezier(.4, 0, .2, 1), visibility 0s; }
+.hp-content { transition: max-width .28s cubic-bezier(.4, 0, .2, 1); }
+
+@media (min-width: 992px) {
+    .hp-sidebar-oculto .hp-sidebar {
+        margin-left: calc(-1 * var(--hp-sidebar-width));
+        /* Fuera de pantalla no debe recibir foco de teclado; se oculta al
+           terminar el desplazamiento y reaparece de inmediato al desplegar. */
+        visibility: hidden;
+        transition: margin-left .28s cubic-bezier(.4, 0, .2, 1), visibility 0s linear .28s;
+    }
+
+    /* Sin menú, el módulo activo ocupa todo el ancho disponible */
+    .hp-sidebar-oculto .hp-content { max-width: 100vw; }
+}
 
 /* ─── Encabezado de página ─────────────────────────────────────────── */
 
@@ -312,10 +353,14 @@ th.hp-sortable a:hover { color: var(--hp-primary); }
         height: 100vh;
     }
     .hp-sidebar.show { left: 0; box-shadow: 0 0 48px rgba(0, 0, 0, .4); }
-    .hp-topbar .btn-toggle-sidebar { display: inline-flex; }
     .hp-backdrop { position: fixed; inset: 0; background: rgba(17, 24, 39, .5); z-index: 1029; display: none; }
     .hp-backdrop.show { display: block; }
     .hp-content { padding: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hp-sidebar, .hp-content { transition: none; }
+    .hp-sidebar-oculto .hp-sidebar { transition: none; }
 }
 
 @media print {
