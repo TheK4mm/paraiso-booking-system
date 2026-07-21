@@ -9,6 +9,18 @@
     <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <!-- Restaura el estado del menú lateral ANTES del primer pintado: si se
+         hiciera desde app.js (al final del body) la página se vería un instante
+         con el menú desplegado en cada navegación. -->
+    <script th:inline="none">
+        (function () {
+            try {
+                if (localStorage.getItem('hp-sidebar') === 'oculto') {
+                    document.documentElement.classList.add('hp-sidebar-oculto');
+                }
+            } catch (e) { /* almacenamiento no disponible: menú desplegado */ }
+        })();
+    </script>
 </head>
 <body>
 <div class="hp-layout">
@@ -86,7 +98,8 @@
         <header class="hp-topbar">
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-sm btn-outline-secondary btn-toggle-sidebar" id="hpSidebarToggle"
-                        type="button" aria-label="Abrir menú">
+                        type="button" aria-controls="hpSidebar" aria-expanded="true"
+                        aria-label="Contraer menú" title="Contraer menú">
                     <i class="bi bi-list"></i>
                 </button>
                 <span class="fw-semibold" th:text="${title}">Página</span>

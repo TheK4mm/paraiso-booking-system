@@ -46,10 +46,11 @@
     </form>
 
     <div class="card">
-        <div th:if="${page.totalElements == 0}"
-             th:replace="~{fragments/estados :: vacio('bi-door-open', 'Sin habitaciones',
-                          'Registra las habitaciones físicas del hotel.',
-                          '/habitaciones/new', 'Nueva habitación')}"></div>
+        <th:block th:if="${page.totalElements == 0}">
+            <div th:replace="~{fragments/estados :: vacio('bi-door-open', 'Sin habitaciones',
+                              'Registra las habitaciones físicas del hotel.',
+                              '/habitaciones/new', 'Nueva habitación')}"></div>
+        </th:block>
 
         <div class="table-responsive" th:if="${page.totalElements > 0}">
             <table class="table hp-table align-middle">
