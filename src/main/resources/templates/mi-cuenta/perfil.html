@@ -64,11 +64,16 @@
                             <div class="card-body">
                                 <h2 class="h6 fw-bold mb-2">Contraseña</h2>
                                 <p class="text-muted small mb-2">
-                                    ¿Quieres cambiarla? Usa la recuperación de contraseña.
+                                    Te enviaremos un enlace a tu email para elegir una nueva.
                                 </p>
-                                <a th:href="@{/recuperar}" class="btn btn-outline-secondary btn-sm">
-                                    Restablecer contraseña
-                                </a>
+                                <!-- POST directo: el modal de autenticación solo se
+                                     renderiza para visitantes anónimos -->
+                                <form th:action="@{/recuperar}" method="post">
+                                    <input type="hidden" name="email" th:value="${#authentication.name}">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                        Restablecer contraseña
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

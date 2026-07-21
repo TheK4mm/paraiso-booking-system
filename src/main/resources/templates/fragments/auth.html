@@ -3,34 +3,54 @@
 <body>
 
 <!--
-  Autenticación del portal público. Un solo markup por formulario:
-  - loginPane / registroPane se insertan tanto en el modal (layout/public)
-    como en las páginas standalone /login y /registro (layout/auth), que
-    siguen existiendo como destino del 302 de Spring Security (staff),
-    fallback sin JavaScript y enlaces de los emails.
+  Autenticación del portal público. NO existen páginas de login, registro
+  ni recuperación: toda la experiencia ocurre en este modal, sobre el
+  portal. Las rutas /login, /registro y /recuperar solo redirigen aquí
+  (ver PortalAuthController y RutasAuth).
+
   - Los ids llevan prefijo hpAuth para no chocar con los campos de las
     páginas públicas (p. ej. /reservar/datos ya usa id="nombre").
-  - Los envíos del modal van por fetch (js/auth-modal.js): el login recibe
-    JSON de los handlers de seguridad; el registro recibe estos mismos
-    fragments re-renderizados con los errores (AuthViewController).
+  - Los envíos van por fetch (js/auth-modal.js): el login recibe JSON de
+    los handlers de seguridad; registro, recuperación y restablecimiento
+    reciben estos mismos fragments re-renderizados con sus errores.
+  - Sin JavaScript el modal se pinta ya abierto desde el servidor
+    (parámetro `abierto`) y los formularios funcionan por POST clásico.
+  - NINGÚN th:fragment puede llamarse como una etiqueta HTML: las
+    expresiones de fragment son selectores de marcado y también casan por
+    nombre de etiqueta (ver fragments/campos.html).
 -->
 
 <!-- ─── Modal (solo visitantes anónimos, ver layout/public) ─────────── -->
-<div th:fragment="modal" class="modal fade hp-auth-modal" id="hpAuthModal" tabindex="-1"
-     aria-labelledby="hpAuthTituloLogin" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header hp-auth-header">
-                <div class="hp-auth-brand"><i class="bi bi-buildings-fill"></i> Hotel Paraíso</div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body hp-auth-body">
-                <div data-hp-auth-pane="login" th:insert="~{fragments/auth :: loginPane}"></div>
-                <div data-hp-auth-pane="registro" hidden th:insert="~{fragments/auth :: registroPane}"></div>
+<th:block th:fragment="modal(pane, abierto)">
+    <div class="modal fade hp-auth-modal" id="hpAuthModal" tabindex="-1"
+         th:classappend="${abierto} ? 'show d-block'"
+         th:attr="aria-labelledby='hpAuthTitulo' + ${#strings.capitalize(pane ?: 'login')},
+                  aria-hidden=${abierto} ? null : 'true'">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header hp-auth-header">
+                    <div class="hp-auth-brand"><i class="bi bi-buildings-fill"></i> Hotel Paraíso</div>
+                    <!-- Anchor a propósito: Bootstrap hace preventDefault en <a>,
+                         así que cierra con JS y navega al portal limpio sin él -->
+                    <a th:href="@{/}" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></a>
+                </div>
+                <div class="modal-body hp-auth-body">
+                    <div data-hp-auth-pane="login" th:hidden="${pane != null and pane != 'login'}"
+                         th:insert="~{fragments/auth :: loginPane}"></div>
+                    <div data-hp-auth-pane="registro" th:hidden="${pane != 'registro'}"
+                         th:insert="~{fragments/auth :: registroPane}"></div>
+                    <div data-hp-auth-pane="recuperar" th:hidden="${pane != 'recuperar'}"
+                         th:insert="~{fragments/auth :: recuperarPane}"></div>
+                    <div data-hp-auth-pane="restablecer" th:hidden="${pane != 'restablecer'}"
+                         th:insert="~{fragments/auth :: restablecerPane}"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    <!-- Backdrop estático: sin JS, Bootstrap no lo crea. auth-modal.js lo
+         retira al adoptar el modal para que no queden dos capas. -->
+    <div th:if="${abierto}" class="modal-backdrop fade show" data-hp-auth-backdrop></div>
+</th:block>
 
 <!-- ─── Pane de login ────────────────────────────────────────────────── -->
 <div th:fragment="loginPane">
@@ -62,7 +82,8 @@
                 <input class="form-check-input" type="checkbox" id="hpAuthRemember" name="remember-me">
                 <label class="form-check-label small" for="hpAuthRemember">Recordarme</label>
             </div>
-            <a th:href="@{/recuperar}" class="small text-decoration-none">¿Olvidaste tu contraseña?</a>
+            <a th:href="@{/recuperar}" data-hp-auth-switch="recuperar"
+               class="small text-decoration-none">¿Olvidaste tu contraseña?</a>
         </div>
         <button type="submit" class="btn btn-primary w-100" data-hp-auth-submit>Iniciar sesión</button>
     </form>
@@ -163,7 +184,8 @@
 
         <button type="submit" class="btn btn-primary w-100" data-hp-auth-submit>Crear cuenta</button>
         <p class="text-muted small text-center mt-3 mb-0">
-            Te enviaremos un enlace para verificar tu email antes del primer ingreso.
+            Podrás iniciar sesión y reservar de inmediato. Te enviaremos un enlace
+            para verificar tu email cuando quieras activar los beneficios.
         </p>
     </form>
 
@@ -173,16 +195,108 @@
     </p>
 </div>
 
-<!-- ─── Registro completado (respuesta AJAX del modal) ───────────────── -->
-<div th:fragment="registroExito" class="text-center py-3" data-hp-auth-exito>
+<!-- ─── Pane de recuperación (th:object="${recuperar}") ──────────────── -->
+<div th:fragment="recuperarPane">
+    <h1 class="h5 text-center mb-1" id="hpAuthTituloRecuperar">Recupera tu acceso</h1>
+    <p class="text-muted small text-center mb-4">
+        Te enviaremos un enlace para elegir una contraseña nueva
+    </p>
+
+    <div class="alert alert-danger py-2 small d-none" data-hp-auth-alert role="alert"></div>
+
+    <form th:action="@{/recuperar}" th:object="${recuperar}" method="post" novalidate
+          data-hp-auth-form="recuperar">
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
+            <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+        </div>
+
+        <div class="mb-3">
+            <label for="hpAuthEmailRecuperar" class="form-label">Email de tu cuenta</label>
+            <input type="email" class="form-control" id="hpAuthEmailRecuperar" name="email"
+                   th:value="*{email}" autocomplete="email" required
+                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+            <div class="invalid-feedback" th:errors="*{email}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" data-hp-auth-submit>Enviar enlace</button>
+    </form>
+
+    <p class="text-center small text-muted mt-4 mb-0">
+        ¿Ya la recordaste?
+        <a th:href="@{/login}" data-hp-auth-switch="login" class="text-decoration-none">Iniciar sesión</a>
+    </p>
+</div>
+
+<!-- ─── Enlace de recuperación enviado (respuesta AJAX) ──────────────── -->
+<div th:fragment="recuperarExito" class="text-center py-3">
     <i class="bi bi-envelope-check hp-auth-icono"></i>
     <h2 class="h5 mt-3 mb-1">Revisa tu correo</h2>
+    <!-- Mensaje genérico a propósito: no confirma si el email existe -->
     <p class="text-muted small mb-4">
-        Enviamos un enlace de verificación a <strong th:text="${email}">email</strong>.
-        Ábrelo para activar tu cuenta; es válido durante 24 horas.
+        Si <strong th:text="${email}">email</strong> corresponde a una cuenta, recibirás
+        un enlace para restablecer tu contraseña. Es válido durante 30 minutos.
     </p>
-    <a th:href="@{/verificar-email/pendiente}" class="btn btn-outline-primary btn-sm">
-        ¿No llegó? Reenviar enlace
+    <a th:href="@{/login}" data-hp-auth-switch="login" class="btn btn-outline-primary btn-sm">
+        Volver a iniciar sesión
+    </a>
+</div>
+
+<!-- ─── Pane de nueva contraseña (th:object="${restablecer}") ────────── -->
+<div th:fragment="restablecerPane">
+    <h1 class="h5 text-center mb-1" id="hpAuthTituloRestablecer">Elige una contraseña nueva</h1>
+    <p class="text-muted small text-center mb-4">Debe tener al menos 8 caracteres</p>
+
+    <div class="alert alert-danger py-2 small d-none" data-hp-auth-alert role="alert"></div>
+
+    <form th:action="@{/restablecer}" th:object="${restablecer}" method="post" novalidate
+          data-hp-auth-form="restablecer">
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2 small">
+            <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+        </div>
+
+        <!-- El token llega por flash desde /restablecer: no queda en la URL -->
+        <input type="hidden" name="token" th:value="${tokenRestablecer} ?: ${restablecer.token}">
+
+        <div class="mb-3">
+            <label for="hpAuthPasswordNueva2" class="form-label">Contraseña nueva</label>
+            <input type="password" class="form-control" id="hpAuthPasswordNueva2" name="password"
+                   autocomplete="new-password" required
+                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+            <div class="invalid-feedback" th:errors="*{password}"></div>
+        </div>
+        <div class="mb-3">
+            <label for="hpAuthConfirmarPassword2" class="form-label">Confírmala</label>
+            <input type="password" class="form-control" id="hpAuthConfirmarPassword2" name="confirmarPassword"
+                   autocomplete="new-password" required
+                   th:classappend="${#fields.hasErrors('confirmarPassword')} ? 'is-invalid'">
+            <div class="invalid-feedback" th:errors="*{confirmarPassword}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" data-hp-auth-submit>Guardar contraseña</button>
+    </form>
+</div>
+
+<!-- ─── Contraseña restablecida (respuesta AJAX) ─────────────────────── -->
+<div th:fragment="restablecerExito" class="text-center py-3">
+    <i class="bi bi-shield-check hp-auth-icono"></i>
+    <h2 class="h5 mt-3 mb-1">Contraseña actualizada</h2>
+    <p class="text-muted small mb-4">Ya puedes entrar con tu contraseña nueva.</p>
+    <a th:href="@{/login}" data-hp-auth-switch="login" class="btn btn-primary btn-sm">
+        Iniciar sesión
+    </a>
+</div>
+
+<!-- ─── Registro completado (respuesta AJAX del modal) ───────────────── -->
+<div th:fragment="registroExito" class="text-center py-3" data-hp-auth-exito>
+    <i class="bi bi-person-check hp-auth-icono"></i>
+    <h2 class="h5 mt-3 mb-1">¡Tu cuenta está lista!</h2>
+    <p class="text-muted small mb-4">
+        Ya puedes iniciar sesión y reservar. Enviamos un enlace a
+        <strong th:text="${email}">email</strong> por si quieres verificar tu correo
+        y activar promociones y ofertas exclusivas; es opcional.
+    </p>
+    <a th:href="@{/login}" data-hp-auth-switch="login" class="btn btn-primary btn-sm">
+        Iniciar sesión
     </a>
 </div>
 

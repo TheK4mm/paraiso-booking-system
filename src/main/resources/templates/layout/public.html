@@ -19,7 +19,7 @@
      respuesta ya se habría comprometido al llegar al final del documento y
      la creación de sesión fallaría. -->
 <th:block sec:authorize="!isAuthenticated()">
-    <div th:insert="~{fragments/auth :: modal}"></div>
+    <th:block th:insert="~{fragments/auth :: modal(pane=${panelAuth}, abierto=${panelAuth != null})}"></th:block>
 </th:block>
 
 <nav class="hp-public-nav">
@@ -89,8 +89,15 @@
                 <ul class="hp-footer-list">
                     <li><a th:href="@{/reservar}">Reservar</a></li>
                     <li><a th:href="@{/consulta-reserva}">Consultar reserva</a></li>
-                    <li><a th:href="@{/registro}" data-hp-auth="registro">Crear cuenta</a></li>
-                    <li><a th:href="@{/login}" data-hp-auth="login">Iniciar sesión</a></li>
+                    <!-- Solo para anónimos: el modal no se renderiza si ya hay sesión
+                         y estos enlaces no tendrían nada que abrir -->
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/registro}" data-hp-auth="registro">Crear cuenta</a>
+                    </li>
+                    <li sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" data-hp-auth="login">Iniciar sesión</a>
+                    </li>
+                    <li sec:authorize="hasRole('CLIENTE')"><a th:href="@{/mi-cuenta}">Mi cuenta</a></li>
                 </ul>
             </div>
             <div class="col-lg-3">
@@ -119,6 +126,16 @@
     <div th:if="${error}" class="toast align-items-center text-bg-danger border-0" data-hp-autoshow>
         <div class="d-flex">
             <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}"></span></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <!-- El cierre de sesión vuelve al portal (?logout): sin modal abierto,
+         el aviso tiene que darlo el propio portal -->
+    <div th:if="${param.logout}" class="toast align-items-center text-bg-primary border-0" data-hp-autoshow>
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-box-arrow-right me-2"></i>Sesión cerrada correctamente.
+            </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>

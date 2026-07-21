@@ -1,15 +1,20 @@
 /* Hotel Paraíso — modal de autenticación del portal público.
  *
- * Progresivo: sin este script (o para usuarios ya autenticados, sin modal
- * en la página) los disparadores [data-hp-auth] navegan a las páginas
- * clásicas /login y /registro por su href.
+ * Toda la autenticación vive aquí: login, registro, recuperación de
+ * contraseña y elección de contraseña nueva. No hay páginas sueltas.
+ *
+ * Progresivo: sin este script el servidor pinta el modal ya abierto
+ * (clases show/d-block + backdrop, ver fragments/auth.html) y los
+ * formularios funcionan por POST clásico; los disparadores [data-hp-auth]
+ * navegan a /login, /registro o /recuperar por su href, que redirigen al
+ * portal con el panel correspondiente abierto.
  *
  * Envíos por fetch con X-Requested-With:
- *  - login  → los handlers de seguridad responden JSON
- *             (200 {redirect} | 401 {mensaje});
- *  - registro → el controller responde el fragment del pane re-renderizado
- *             con los errores (422) o el mensaje de éxito (200), que se
- *             intercambia dentro del modal sin recargar la página.
+ *  - login → los handlers de seguridad responden JSON
+ *            (200 {redirect} | 401 {mensaje});
+ *  - el resto → el controller responde el fragment del panel
+ *            re-renderizado con sus errores (422) o el de éxito (200),
+ *            que se intercambia dentro del modal sin recargar.
  */
 (function () {
     'use strict';
@@ -17,24 +22,28 @@
     const modalEl = document.getElementById('hpAuthModal');
     if (!modalEl || typeof bootstrap === 'undefined') return;
 
-    const modal = new bootstrap.Modal(modalEl);
-    const panes = {
-        login: modalEl.querySelector('[data-hp-auth-pane="login"]'),
-        registro: modalEl.querySelector('[data-hp-auth-pane="registro"]')
-    };
-    const titulos = { login: 'hpAuthTituloLogin', registro: 'hpAuthTituloRegistro' };
+    const panes = {};
+    modalEl.querySelectorAll('[data-hp-auth-pane]').forEach(pane => {
+        panes[pane.dataset.hpAuthPane] = pane;
+    });
 
-    const paneActivo = () => (panes.login.hidden ? panes.registro : panes.login);
+    const modal = new bootstrap.Modal(modalEl);
+
+    const paneActivo = () => Object.values(panes).find(pane => !pane.hidden) || panes.login;
+
+    const tituloDe = (nombre) => 'hpAuthTitulo' + nombre.charAt(0).toUpperCase() + nombre.slice(1);
 
     const enfocar = () => {
-        const campo = paneActivo().querySelector('.is-invalid')
-            || paneActivo().querySelector('input:not([type="hidden"]), select');
+        const pane = paneActivo();
+        const campo = pane.querySelector('.is-invalid')
+            || pane.querySelector('input:not([type="hidden"]), select');
         if (campo) campo.focus();
     };
 
     const mostrarPane = (nombre) => {
+        if (!panes[nombre]) return;
         Object.entries(panes).forEach(([n, pane]) => { pane.hidden = n !== nombre; });
-        modalEl.setAttribute('aria-labelledby', titulos[nombre]);
+        modalEl.setAttribute('aria-labelledby', tituloDe(nombre));
     };
 
     const mostrarAlerta = (pane, mensaje) => {
@@ -44,8 +53,8 @@
         alerta.classList.remove('d-none');
     };
 
-    const ocultarAlertas = (pane) => {
-        pane.querySelectorAll('[data-hp-auth-alert]').forEach(a => a.classList.add('d-none'));
+    const ocultarAlertas = (raiz) => {
+        raiz.querySelectorAll('[data-hp-auth-alert]').forEach(a => a.classList.add('d-none'));
     };
 
     const cargando = (form, estado) => {
@@ -55,7 +64,16 @@
         btn.classList.toggle('hp-btn-cargando', estado);
     };
 
-    // ─── Apertura y conmutación login ⇄ registro ────────────────────
+    // ─── Adopción del modal que el servidor pintó abierto ───────────
+    // Sin esto convivirían dos estados: el estático del HTML y el que
+    // gestiona Bootstrap (foco, ESC, scroll del body).
+    if (modalEl.classList.contains('show')) {
+        modalEl.classList.remove('show', 'd-block');
+        document.querySelectorAll('[data-hp-auth-backdrop]').forEach(b => b.remove());
+        modal.show();
+    }
+
+    // ─── Apertura y conmutación entre paneles ───────────────────────
     document.addEventListener('click', event => {
         const disparador = event.target.closest('[data-hp-auth]');
         if (disparador) {
@@ -76,12 +94,15 @@
     modalEl.addEventListener('show.bs.modal', () => ocultarAlertas(modalEl));
     modalEl.addEventListener('shown.bs.modal', enfocar);
 
-    // ─── Envíos (delegado: el pane de registro se reemplaza entero) ──
+    // ─── Envíos (delegado: los paneles se reemplazan enteros) ───────
     modalEl.addEventListener('submit', event => {
         const form = event.target.closest('form[data-hp-auth-form]');
         if (!form) return;
         event.preventDefault();
-        ocultarAlertas(paneActivo());
+
+        const nombre = form.dataset.hpAuthForm;
+        const pane = panes[nombre] || paneActivo();
+        ocultarAlertas(pane);
         cargando(form, true);
 
         fetch(form.action, {
@@ -89,10 +110,10 @@
             body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-            .then(respuesta => form.dataset.hpAuthForm === 'login'
+            .then(respuesta => nombre === 'login'
                 ? procesarLogin(respuesta)
-                : procesarRegistro(respuesta))
-            .catch(() => mostrarAlerta(paneActivo(),
+                : procesarFragmento(pane, respuesta))
+            .catch(() => mostrarAlerta(pane,
                 'No pudimos conectar con el servidor. Inténtalo de nuevo.'))
             .finally(() => cargando(form, false));
     });
@@ -103,6 +124,7 @@
                 if (datos.redirect) {
                     window.location.assign(datos.redirect);
                 } else {
+                    // Sin destino forzoso: el usuario se queda donde estaba
                     window.location.reload();
                 }
             });
@@ -122,13 +144,14 @@
         mostrarAlerta(panes.login, 'La sesión expiró. Recarga la página e inténtalo de nuevo.');
     }
 
-    function procesarRegistro(respuesta) {
+    /** 200 y 422 traen el panel re-renderizado; cualquier otro status, no. */
+    function procesarFragmento(pane, respuesta) {
         if (respuesta.status !== 200 && respuesta.status !== 422) {
-            mostrarAlerta(panes.registro, 'La sesión expiró. Recarga la página e inténtalo de nuevo.');
+            mostrarAlerta(pane, 'La sesión expiró. Recarga la página e inténtalo de nuevo.');
             return;
         }
         return respuesta.text().then(html => {
-            panes.registro.innerHTML = html;
+            pane.innerHTML = html;
             enfocar();
         });
     }

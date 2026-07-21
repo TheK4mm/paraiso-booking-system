@@ -9,6 +9,11 @@
     <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
+<!--
+  Tarjeta centrada sobre fondo oscuro. La usan las páginas de error: la
+  autenticación ya no tiene páginas propias (vive en el modal del portal,
+  ver fragments/auth.html), de ahí que este layout ya no se llame "auth".
+-->
 <body>
 <div class="hp-auth">
     <div class="hp-auth-card">
